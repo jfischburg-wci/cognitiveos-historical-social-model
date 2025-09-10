@@ -4,24 +4,58 @@
   import ParallaxCrow from './lib/ParallaxCrow.svelte'
   let audio
 
-  // Synth fallback if /crow-caw.mp3 is missing or blocked
+  // Synth fallback: raspy crow-like burst using filtered noise + short pitch drop
   async function synthCaw() {
     try {
       const Ctx = window.AudioContext || window.webkitAudioContext
       if (!Ctx) return
       const ctx = new Ctx()
-      const o = ctx.createOscillator()
-      const g = ctx.createGain()
-      o.type = 'square'
-      o.frequency.setValueAtTime(380, ctx.currentTime)
-      o.frequency.exponentialRampToValueAtTime(220, ctx.currentTime + 0.12)
-      g.gain.setValueAtTime(0.001, ctx.currentTime)
-      g.gain.exponentialRampToValueAtTime(0.4, ctx.currentTime + 0.01)
-      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.18)
-      o.connect(g).connect(ctx.destination)
-      o.start()
-      o.stop(ctx.currentTime + 0.2)
-      setTimeout(() => ctx.close(), 400)
+
+      const makeBurst = (offset = 0) => {
+        const dur = 0.22
+        const now = ctx.currentTime + offset
+        // White noise buffer
+        const buffer = ctx.createBuffer(1, ctx.sampleRate * dur, ctx.sampleRate)
+        const data = buffer.getChannelData(0)
+        for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1)
+        const noise = ctx.createBufferSource()
+        noise.buffer = buffer
+
+        // Bandpass around ~700Hz with resonance and a slight downward sweep
+        const bp = ctx.createBiquadFilter()
+        bp.type = 'bandpass'
+        bp.frequency.setValueAtTime(780, now)
+        bp.frequency.exponentialRampToValueAtTime(520, now + dur)
+        bp.Q.value = 6
+
+        // Gentle overdrive for rasp
+        const drive = ctx.createWaveShaper()
+        const curve = new Float32Array(256)
+        for (let i = 0; i < 256; i++) {
+          const x = (i / 128) - 1
+          curve[i] = Math.tanh(2.5 * x)
+        }
+        drive.curve = curve
+
+        const comp = ctx.createDynamicsCompressor()
+        comp.threshold.value = -18
+
+        // Envelope
+        const g = ctx.createGain()
+        g.gain.setValueAtTime(0.0001, now)
+        g.gain.exponentialRampToValueAtTime(0.6, now + 0.015)
+        g.gain.exponentialRampToValueAtTime(0.0001, now + dur)
+
+        noise.connect(bp).connect(drive).connect(comp).connect(g).connect(ctx.destination)
+        noise.start(now)
+        noise.stop(now + dur)
+      }
+
+      // Crow often does a double-burst "caw-caw"
+      makeBurst(0)
+      makeBurst(0.12)
+
+      setTimeout(() => ctx.close(), 600)
     } catch {}
   }
 
@@ -81,6 +115,21 @@
       <p>Hops, blinks, and context cues—tasteful, responsive, and accessible.</p>
     </div>
   </section>
+
+  <section class="about">
+    <h2>About Corvid</h2>
+    <p>
+      Corvid explores social cognition with a crow-inspired aesthetic—
+      iridescent materials, measured motion, and playful micro‑interactions.
+      Built with Svelte + Vite and deployed on GitHub Pages.
+    </p>
+  </section>
+
+  <footer class="site-foot">
+    <a href="https://github.com/jfischburg-wci/cognitiveos-historical-social-model" target="_blank" rel="noopener">Repository</a>
+    <span>•</span>
+    <a href="https://github.com/users/jfischburg-wci/projects/4" target="_blank" rel="noopener">Project Board</a>
+  </footer>
 
   <!-- Optional: place crow-caw.mp3 into frontend/public/ to enable -->
   <audio bind:this={audio} src="/crow-caw.mp3" preload="auto" />
@@ -149,4 +198,7 @@
   .feature{ padding: 1rem; border-radius: 16px; border: 1px solid rgba(130,247,255,0.2); background: linear-gradient(180deg, rgba(130,247,255,0.05), rgba(255,255,255,0.02)); }
   .feature h3{ margin: .2rem 0 .4rem; letter-spacing: .04em; }
   @media (max-width: 900px){ .features{ grid-template-columns: 1fr } }
+  .about{ max-width: 820px; margin: 0 auto 3rem; padding: 0 2rem; text-align: center; opacity: .9 }
+  .site-foot{ display:flex; gap:.6rem; justify-content:center; padding: 2rem; opacity:.7 }
+  .site-foot a{ color: #82f7ff; text-decoration: none }
 </style>

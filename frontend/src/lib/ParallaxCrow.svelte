@@ -24,6 +24,8 @@
 <section class="stage" aria-label="Parallax crow">
   <div class="layer l1" style="transform: translate3d(0,{depth1}px,0);" aria-hidden="true" />
   <div class="layer l2" style="transform: translate3d(0,{depth2}px,0);" aria-hidden="true" />
+  <!-- Shadow under the crow -->
+  <div class="shadow {hopping ? 'squash' : ''}" aria-hidden="true"></div>
   <div class="crow {hopping ? 'hop' : ''}" in:scale={{ start: 0.9, duration: 700 }} tabindex="0" role="button" aria-label="Crow" on:click={triggerHop} on:keydown={(e)=> (e.key==='Enter'||e.key===' ') && (e.preventDefault(), triggerHop())}>
     <svg viewBox="0 0 240 140" width="100%" height="100%" role="img" aria-label="Crow silhouette">
       <defs>
@@ -44,6 +46,8 @@
       <g transform="translate(20,20)" fill="#0f1216">
         <path d="M0,40 C20,10 80,0 120,20 C150,35 160,60 160,80 L120,70 L70,65 L40,70 Z" fill="url(#iris)" opacity="0.25"/>
         <path d="M0,40 C20,10 80,0 120,20 C150,35 160,60 160,80 L120,70 L70,65 L40,70 Z" />
+        <!-- simple wing shape that can flick on hop -->
+        <path class="wing" d="M60,58 C85,40 110,35 132,50 C120,55 110,60 92,64 Z" fill="#0e1115" />
         <!-- head -->
         <g class="head">
           <circle cx="145" cy="45" r="18" fill="#0b0e12" />
@@ -64,6 +68,7 @@
   .l1{ top: 5%; background: radial-gradient(600px 120px at 20% 50%, rgba(126,247,255,.12), transparent 60%); }
   .l2{ top: 20%; background: radial-gradient(600px 120px at 80% 50%, rgba(165,139,255,.12), transparent 60%); }
   .l3{ top: 35%; background: radial-gradient(800px 140px at 50% 50%, rgba(94,234,212,.12), transparent 60%); }
+  .shadow{ position:absolute; left:50%; transform:translateX(-50%); bottom:12%; width:min(60%,620px); height:22px; background: radial-gradient(50% 50% at 50% 50%, rgba(0,0,0,.5), rgba(0,0,0,0)); filter: blur(8px); opacity:.55 }
   .crow{ position: relative; margin: 0 auto; width: min(90%, 920px); filter: drop-shadow(0 30px 60px rgba(0,0,0,0.45)); }
   .eye{ animation: blink 6s infinite steps(1); transform-origin: center; filter: url(#glow); }
   @keyframes blink{
@@ -80,10 +85,25 @@
   }
   /* Hop interaction */
   .crow.hop{ animation: hop 480ms cubic-bezier(.2,.7,0,1) 1; }
+  .shadow.squash{ animation: squash 480ms cubic-bezier(.2,.7,0,1) 1; }
   @keyframes hop{
     0% { transform: translateY(0) scale(1) }
-    35% { transform: translateY(-12px) scale(1.02) }
-    70% { transform: translateY(0) scale(0.98) }
+    25% { transform: translateY(-16px) scale(1.02) }
+    55% { transform: translateY(0) scale(0.985) }
     100% { transform: translateY(0) scale(1) }
+  }
+  @keyframes squash{
+    0% { transform: translateX(-50%) scaleX(1) scaleY(1); opacity:.55 }
+    25% { transform: translateX(-50%) scaleX(0.9) scaleY(0.8); opacity:.45 }
+    55% { transform: translateX(-50%) scaleX(1.15) scaleY(0.6); opacity:.6 }
+    100% { transform: translateX(-50%) scaleX(1) scaleY(1); opacity:.55 }
+  }
+  /* Wing flick on hop */
+  .crow.hop .wing{ animation: wingflick 320ms ease-out 1 }
+  @keyframes wingflick{
+    0% { transform: rotate(0deg); transform-origin: 90px 58px }
+    25% { transform: rotate(-10deg) }
+    60% { transform: rotate(6deg) }
+    100% { transform: rotate(0deg) }
   }
 </style>
