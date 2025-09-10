@@ -1,19 +1,30 @@
 <script>
-  import { onMount, onDestroy } from 'svelte'
+  import { onMount, onDestroy, createEventDispatcher } from 'svelte'
   import { fly, scale } from 'svelte/transition'
+  const dispatch = createEventDispatcher()
   let y = 0
   const handle = () => { y = window.scrollY || 0 }
   onMount(() => { handle(); window.addEventListener('scroll', handle, { passive: true }) })
   onDestroy(() => window.removeEventListener('scroll', handle))
-  $: depth1 = Math.min(40, y * 0.08)
-  $: depth2 = Math.min(80, y * 0.16)
-  $: depth3 = Math.min(120, y * 0.24)
+  const prefersReduced = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  $: mult = prefersReduced ? 0.02 : 0.08
+  $: depth1 = Math.min(40, y * mult)
+  $: depth2 = Math.min(80, y * mult * 2)
+  $: depth3 = Math.min(120, y * mult * 3)
+
+  let hopping = false
+  function triggerHop(){
+    if (hopping) return
+    hopping = true
+    dispatch('interact')
+    setTimeout(() => { hopping = false }, 500)
+  }
 </script>
 
 <section class="stage" aria-label="Parallax crow">
   <div class="layer l1" style="transform: translate3d(0,{depth1}px,0);" aria-hidden="true" />
   <div class="layer l2" style="transform: translate3d(0,{depth2}px,0);" aria-hidden="true" />
-  <div class="crow" in:scale={{ start: 0.9, duration: 700 }}>
+  <div class="crow {hopping ? 'hop' : ''}" in:scale={{ start: 0.9, duration: 700 }} tabindex="0" role="button" aria-label="Crow" on:click={triggerHop} on:keydown={(e)=> (e.key==='Enter'||e.key===' ') && (e.preventDefault(), triggerHop())}>
     <svg viewBox="0 0 240 140" width="100%" height="100%" role="img" aria-label="Crow silhouette">
       <defs>
         <linearGradient id="iris" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -34,11 +45,13 @@
         <path d="M0,40 C20,10 80,0 120,20 C150,35 160,60 160,80 L120,70 L70,65 L40,70 Z" fill="url(#iris)" opacity="0.25"/>
         <path d="M0,40 C20,10 80,0 120,20 C150,35 160,60 160,80 L120,70 L70,65 L40,70 Z" />
         <!-- head -->
-        <circle cx="145" cy="45" r="18" fill="#0b0e12" />
+        <g class="head">
+          <circle cx="145" cy="45" r="18" fill="#0b0e12" />
+          <!-- eye -->
+          <circle class="eye" cx="150" cy="43" r="3.6" fill="#cde8ff" />
+        </g>
         <!-- beak -->
         <polygon points="160,45 200,38 158,52" fill="#101418" />
-        <!-- eye -->
-        <circle class="eye" cx="150" cy="43" r="3.6" fill="#cde8ff" />
       </g>
     </svg>
   </div>
@@ -56,5 +69,21 @@
   @keyframes blink{
     0%, 92%, 100% { r: 3.6 }
     94%, 96% { r: 0.8 }
+  }
+  /* Idle head tilt */
+  .head{ transform-origin: 145px 45px; animation: headtilt 5.5s ease-in-out infinite; }
+  @keyframes headtilt{
+    0%, 90%, 100% { transform: rotate(0deg) }
+    40% { transform: rotate(2.2deg) }
+    50% { transform: rotate(-1.5deg) }
+    60% { transform: rotate(1.2deg) }
+  }
+  /* Hop interaction */
+  .crow.hop{ animation: hop 480ms cubic-bezier(.2,.7,0,1) 1; }
+  @keyframes hop{
+    0% { transform: translateY(0) scale(1) }
+    35% { transform: translateY(-12px) scale(1.02) }
+    70% { transform: translateY(0) scale(0.98) }
+    100% { transform: translateY(0) scale(1) }
   }
 </style>

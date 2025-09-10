@@ -3,11 +3,37 @@
   import { fly } from 'svelte/transition'
   import ParallaxCrow from './lib/ParallaxCrow.svelte'
   let audio
-  function caw() {
+
+  // Synth fallback if /crow-caw.mp3 is missing or blocked
+  async function synthCaw() {
+    try {
+      const Ctx = window.AudioContext || window.webkitAudioContext
+      if (!Ctx) return
+      const ctx = new Ctx()
+      const o = ctx.createOscillator()
+      const g = ctx.createGain()
+      o.type = 'square'
+      o.frequency.setValueAtTime(380, ctx.currentTime)
+      o.frequency.exponentialRampToValueAtTime(220, ctx.currentTime + 0.12)
+      g.gain.setValueAtTime(0.001, ctx.currentTime)
+      g.gain.exponentialRampToValueAtTime(0.4, ctx.currentTime + 0.01)
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.18)
+      o.connect(g).connect(ctx.destination)
+      o.start()
+      o.stop(ctx.currentTime + 0.2)
+      setTimeout(() => ctx.close(), 400)
+    } catch {}
+  }
+
+  async function caw() {
     if (audio && audio.play) {
-      audio.currentTime = 0
-      audio.play().catch(() => {})
+      try {
+        audio.currentTime = 0
+        await audio.play()
+        return
+      } catch {}
     }
+    await synthCaw()
   }
   onMount(() => {
     if (audio && audio.load) {
@@ -20,11 +46,11 @@
   <div class="bg-iris" aria-hidden="true" />
 
   <header class="hero">
-    <h1 class="logo" on:click={caw}>CORVID</h1>
+    <button class="logo" on:click={caw} aria-label="Play crow caw">CORVID</button>
     <p class="tag">Iridescent social cognition in motion</p>
   </header>
 
-  <ParallaxCrow />
+  <ParallaxCrow on:interact={caw} />
 
   <section class="cta">
     <button class="caw" on:click={caw} aria-label="Caw">
@@ -91,6 +117,7 @@
     text-align: center;
   }
   .logo{
+    background: none; border: 0; display: inline-block;
     font-family: ui-sans-serif, system-ui, Segoe UI, Roboto, Ubuntu, Cantarell, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
     letter-spacing: 0.12em;
     font-size: clamp(42px, 9vw, 120px);
