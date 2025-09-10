@@ -1,11 +1,27 @@
 <script>
   import { onMount, onDestroy, createEventDispatcher } from 'svelte'
   import { fly, scale } from 'svelte/transition'
+  import traceRaw from '../assets/crow_trace.svg?raw'
   export let reducedMotion = false
   const dispatch = createEventDispatcher()
   let y = 0
   const handle = () => { y = window.scrollY || 0 }
   let idleTimer
+  // Prepare traced SVG group (from potrace) for injection
+  let traceGroup = ''
+  let traceScale = 1
+  let traceTx = 30, traceTy = 28
+  {
+    const vb = /viewBox="([^"]+)"/i.exec(traceRaw)
+    const dims = vb ? vb[1].split(/\s+/).map(parseFloat) : [0,0,1024,1024]
+    const w = dims[2] || 1024
+    const desired = 280
+    traceScale = desired / w
+    const grp = traceRaw.match(/<g[\s\S]*?<\/g>/i) || traceRaw.match(/<g[^>]*>[\s\S]*<\/g>/i)
+    if (grp && grp[0]) {
+      traceGroup = grp[0].replace(/fill="#000000"/gi, 'fill="#0b0f14"')
+    }
+  }
   onMount(() => {
     handle();
     window.addEventListener('scroll', handle, { passive: true })
@@ -57,20 +73,18 @@
       </defs>
       <!-- High-contrast full crow silhouette (approximate). Replace with traced SVG later. -->
       <g transform="translate(30,40)" fill="#0b0f14" stroke="#000" stroke-opacity=".35" stroke-width="0.6">
-        <!-- tail -->
-        <path d="M10,110 C32,100 50,95 70,100 L30,128 Z" />
-        <!-- body -->
-        <path d="M40,90 C40,52 98,22 170,34 C228,44 268,80 268,112 C268,146 204,164 144,156 C88,148 40,126 40,90 Z" />
+        <!-- traced silhouette (injected) -->
+        <g class="trace" transform="translate({traceTx},{traceTy}) scale({traceScale})" aria-hidden="true">{@html traceGroup}</g>
         <!-- wing group with layered feathers for shake/flick -->
         <g class="wing">
           <path class="feather f1" d="M96,78 C132,60 170,58 206,78 C188,84 168,98 126,104 Z" fill="#0c1218" />
           <path class="feather f2" d="M96,86 C134,66 170,66 202,84 C186,90 168,102 126,108 Z" fill="#0c141a" />
           <path class="feather f3" d="M98,92 C132,74 166,72 198,88 C182,94 166,106 126,112 Z" fill="#0d151c" />
         </g>
-        <!-- legs -->
+        <!-- legs (overlay) -->
         <path d="M140,156 l-8,26" stroke="#0e0e0e" stroke-width="3" />
         <path d="M172,156 l-6,24" stroke="#0e0e0e" stroke-width="3" />
-        <!-- head group with eye -->
+        <!-- head group with eye (overlay) -->
         <g class="head">
           <circle cx="232" cy="64" r="22" fill="#0a0d12" />
           <circle class="eye" cx="238" cy="60" r="4" fill="#e6f6ff" />
