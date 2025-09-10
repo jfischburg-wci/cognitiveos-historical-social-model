@@ -1,6 +1,6 @@
 <script>
   import { onMount, onDestroy } from 'svelte'
-  import { Motion } from '@motionone/svelte'
+  import { fly, scale } from 'svelte/transition'
   let y = 0
   const handle = () => { y = window.scrollY || 0 }
   onMount(() => { handle(); window.addEventListener('scroll', handle, { passive: true }) })
@@ -13,7 +13,7 @@
 <section class="stage" aria-label="Parallax crow">
   <div class="layer l1" style="transform: translate3d(0,{depth1}px,0);" aria-hidden="true" />
   <div class="layer l2" style="transform: translate3d(0,{depth2}px,0);" aria-hidden="true" />
-  <Motion class="crow" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 0.7 }}>
+  <div class="crow" in:scale={{ start: 0.9, duration: 700 }}>
     <svg viewBox="0 0 240 140" width="100%" height="100%" role="img" aria-label="Crow silhouette">
       <defs>
         <linearGradient id="iris" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -41,7 +41,7 @@
         <circle class="eye" cx="150" cy="43" r="3.6" fill="#cde8ff" />
       </g>
     </svg>
-  </Motion>
+  </div>
   <div class="layer l3" style="transform: translate3d(0,{depth3}px,0);" aria-hidden="true" />
 </section>
 
@@ -58,4 +58,3 @@
     94%, 96% { r: 0.8 }
   }
 </style>
-

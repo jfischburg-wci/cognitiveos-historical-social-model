@@ -1,6 +1,6 @@
 <script>
   import { onMount } from 'svelte'
-  import { Motion } from '@motionone/svelte'
+  import { fly } from 'svelte/transition'
   import ParallaxCrow from './lib/ParallaxCrow.svelte'
   let audio
   function caw() {
@@ -16,12 +16,7 @@
   })
 </script>
 
-<Motion
-  initial={{ opacity: 0, y: 24 }}
-  animate={{ opacity: 1, y: 0 }}
-  transition={{ duration: 0.7 }}
-  class="page"
->
+<div class="page" in:fly={{ y: 24, duration: 700 }}>
   <div class="bg-iris" aria-hidden="true" />
 
   <header class="hero">
@@ -63,7 +58,7 @@
 
   <!-- Optional: place crow-caw.mp3 into frontend/public/ to enable -->
   <audio bind:this={audio} src="/crow-caw.mp3" preload="auto" />
-</Motion>
+</div>
 
 <style>
   :global(:root){
