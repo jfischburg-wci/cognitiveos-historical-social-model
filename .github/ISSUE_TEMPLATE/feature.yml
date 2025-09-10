@@ -1,0 +1,55 @@
+
+name: Feature
+description: Plan a feature with acceptance criteria for Codex execution
+title: "[Feature]: "
+labels: ["feature", "ready-for-codex"]
+body:
+  - type: input
+    id: path
+    attributes:
+      label: Paths
+      description: Affected services or packages
+      placeholder: "services/<domain>/<service>/..., packages/<package>/..."
+    validations:
+      required: true
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What and why?
+      placeholder: One-paragraph business + technical summary
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance Criteria (testable)
+      description: Bullet list of verifiable outcomes
+      placeholder: |
+        - GET /health returns 200 with {"status":"ok"}
+        - Unit tests cover new code (≥80%)
+        - Docs updated (README or CHANGELOG)
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Constraints / Out of Scope
+      description: Guardrails & exclusions
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - P0
+        - P1
+        - P2
+    validations:
+      required: true
+  - type: checkboxes
+    id: ready
+    attributes:
+      label: Ready for Codex
+      options:
+        - label: This issue is sufficiently specified and testable
+          required: true

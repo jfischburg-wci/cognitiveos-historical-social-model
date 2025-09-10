@@ -1,0 +1,12 @@
+name: Documentation
+description: Add or update docs
+labels: [documentation]
+body:
+  - type: input
+    id: path
+    attributes: { label: Related path, placeholder: "docs/... or services/<service>/docs/..." }
+    validations: { required: true }
+  - type: textarea
+    id: what
+    attributes: { label: What to document and where }
+    validations: { required: true }

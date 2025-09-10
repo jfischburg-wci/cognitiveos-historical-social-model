@@ -1,0 +1,21 @@
+name: Bug report
+description: File a reproducible defect
+labels: [bug]
+body:
+  - type: input
+    id: path
+    attributes: { label: Affected path, placeholder: "services/<domain>/<service>/..." }
+    validations: { required: true }
+  - type: textarea
+    id: repro
+    attributes: { label: Reproduction steps, placeholder: "1. … 2. … 3. …" }
+    validations: { required: true }
+  - type: input
+    id: expected
+    attributes: { label: Expected result }
+  - type: input
+    id: actual
+    attributes: { label: Actual result }
+  - type: textarea
+    id: env
+    attributes: { label: Environment, placeholder: "OS/Browser/Node/Docker tags" }

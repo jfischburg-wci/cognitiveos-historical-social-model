@@ -1,0 +1,53 @@
+[
+  {
+    "id": "e_1914_06_28",
+    "date": "1914-06-28",
+    "title": "Assassination of Archduke Franz Ferdinand",
+    "summary": "Heir to the Austro\u2011Hungarian throne is assassinated in Sarajevo, intensifying the July Crisis.",
+    "region": "Europe-Balkans",
+    "citations": [
+      "Encyclopaedia Britannica \u2014 July Crisis",
+      "Austro-Hungarian archives (Sarajevo, 1914)"
+    ]
+  },
+  {
+    "id": "e_1914_07_28",
+    "date": "1914-07-28",
+    "title": "Austria-Hungary declares war on Serbia",
+    "summary": "Following the July Crisis, Austria\u2011Hungary issues a declaration of war against Serbia.",
+    "region": "Europe-Balkans",
+    "citations": [
+      "Austrian declaration of war text, 28 July 1914"
+    ]
+  },
+  {
+    "id": "e_1914_08_01",
+    "date": "1914-08-01",
+    "title": "Germany declares war on Russia",
+    "summary": "Germany declares war on Russia amid escalating mobilizations across Europe.",
+    "region": "Europe-Central",
+    "citations": [
+      "German Imperial Gazette, 1 August 1914"
+    ]
+  },
+  {
+    "id": "e_1914_08_03",
+    "date": "1914-08-03",
+    "title": "Germany declares war on France",
+    "summary": "Germany declares war on France; mobilizations accelerate on the Western Front.",
+    "region": "Europe-West",
+    "citations": [
+      "French diplomatic records, 3 August 1914"
+    ]
+  },
+  {
+    "id": "e_1914_08_04",
+    "date": "1914-08-04",
+    "title": "United Kingdom declares war on Germany",
+    "summary": "After the German invasion of Belgium, the UK declares war on Germany.",
+    "region": "Europe-West",
+    "citations": [
+      "UK Parliamentary records, 4 August 1914"
+    ]
+  }
+]

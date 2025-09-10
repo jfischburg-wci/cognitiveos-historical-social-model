@@ -1,0 +1,10 @@
+frontend:
+  - 'services/**/frontend/**'
+svelte:
+  - '**/*.svelte'
+documentation:
+  - '**/*.md'
+services:
+  - 'services/**'
+packages:
+  - 'packages/**'

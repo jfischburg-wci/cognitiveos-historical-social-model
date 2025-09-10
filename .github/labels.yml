@@ -1,0 +1,29 @@
+- name: enhancement
+  color: a2eeef
+  description: New feature or request
+- name: frontend
+  color: 0e8a16
+- name: svelte
+  color: 9b59b6
+- name: migration
+  color: fbca04
+- name: documentation
+  color: 0052cc
+- name: bug
+  color: d73a4a
+- name: epic
+  color: 5319e7
+- name: P0
+  color: ee0701
+- name: P1
+  color: d93f0b
+- name: P2
+  color: fbca04
+- name: P3
+  color: c2e0c6
+- name: services
+  color: 1d76db
+  description: Changes to service code
+- name: packages
+  color: fef2c0
+  description: Changes to shared packages

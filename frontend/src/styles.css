@@ -1,0 +1,10 @@
+*{ box-sizing: border-box }
+html, body, #app{ height: 100% }
+body{
+  margin: 0; background: #0c0f12; color: #e6eef7;
+  font-family: ui-sans-serif, system-ui, Segoe UI, Roboto, Ubuntu, Cantarell, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+  line-height: 1.45;
+}
+a{ color: #82f7ff }
+button{ font: inherit }
+

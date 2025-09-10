@@ -1,0 +1,41 @@
+name: Feature request
+description: Propose a new capability or improvement
+labels: [enhancement]
+body:
+  - type: textarea
+    id: summary
+    attributes: { label: Summary, description: What and why? }
+    validations: { required: true }
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope & Paths
+      description: List impacted paths (e.g., services/<domain>/<service>/..., packages/<package>/...)
+      placeholder: |
+        - services/<domain>/<service>/<module>/
+        - …
+    validations: { required: true }
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance Criteria
+      description: Bullet list of verifiable outcomes
+      placeholder: |
+        - Tests cover new code (≥80%)
+        - Docs updated; exports via index.ts
+        - A11y considerations addressed
+    validations: { required: true }
+  - type: checkboxes
+    id: dod
+    attributes:
+      label: Definition of Done
+      options:
+        - label: Code committed with Conventional Commits
+        - label: Tests added/updated or manual smoke in README
+        - label: Docs updated (README, comments)
+        - label: PR created; labels & project fields set
+        - label: Demo notes/screenshots attached (if UI)
+    validations: { required: true }
+  - type: dropdown
+    id: priority
+    attributes: { label: Priority, options: [P0, P1, P2, P3] }
