@@ -1,0 +1,56 @@
+name: "Design Task"
+description: "Define a design deliverable with UX inputs and acceptance criteria"
+title: "Design: <short title>"
+labels: ["design", "ux", "corvid"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Provide clear goals, constraints, references, and decisions needed. Add links to any Figma/Canva/Dribbble inspiration.
+  - type: input
+    id: goal
+    attributes:
+      label: Goal
+      description: One sentence describing the design outcome
+      placeholder: e.g., Iridescent color system for dark UI
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Background, problem, audience, and constraints
+    validations:
+      required: true
+  - type: textarea
+    id: references
+    attributes:
+      label: References
+      description: Mood board links, competitors, prior art
+  - type: textarea
+    id: deliverables
+    attributes:
+      label: Deliverables
+      description: List of artifacts (tokens, components, mockups)
+      placeholder: e.g., Color tokens JSON, sample screens (desktop/mobile)
+  - type: textarea
+    id: interactions
+    attributes:
+      label: Interactions
+      description: Motion/feedback expectations (states, durations, easings)
+  - type: textarea
+    id: accessibility
+    attributes:
+      label: Accessibility
+      description: Contrast targets, motion sensitivity, reduced‑motion fallbacks
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance Criteria
+      description: Clear, testable criteria to mark this complete
+  - type: textarea
+    id: questions
+    attributes:
+      label: Open Questions
+      description: Specific questions for dev/PM
+

@@ -1,4 +1,5 @@
 <script>
+  import { onMount } from 'svelte'
   import { Motion } from '@motionone/svelte'
   import ParallaxCrow from './lib/ParallaxCrow.svelte'
   let audio
@@ -8,6 +9,11 @@
       audio.play().catch(() => {})
     }
   }
+  onMount(() => {
+    if (audio && audio.load) {
+      try { audio.load() } catch {}
+    }
+  })
 </script>
 
 <Motion
@@ -29,6 +35,30 @@
     <button class="caw" on:click={caw} aria-label="Caw">
       Caw
     </button>
+  </section>
+
+  <section class="coming">
+    <h2>Coming Soon</h2>
+    <p>
+      We’re crafting an iridescent, crow-inspired exploration of social cognition.
+      Scroll-driven parallax, subtle micro‑interactions, and a bold technical
+      typographic system are landing shortly.
+    </p>
+  </section>
+
+  <section class="features">
+    <div class="feature">
+      <h3>Iridescent Theme</h3>
+      <p>Charcoal base with spectral highlights and soft bloom.</p>
+    </div>
+    <div class="feature">
+      <h3>Motion Craft</h3>
+      <p>Motion One animations for parallax, entrances, and micro‑states.</p>
+    </div>
+    <div class="feature">
+      <h3>Crow Interactions</h3>
+      <p>Hops, blinks, and context cues—tasteful, responsive, and accessible.</p>
+    </div>
   </section>
 
   <!-- Optional: place crow-caw.mp3 into frontend/public/ to enable -->
@@ -91,5 +121,10 @@
     backdrop-filter: blur(6px);
     box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04), 0 6px 30px rgba(0,0,0,0.4);
   }
+  .coming{ max-width: 820px; margin: 0 auto; padding: 1rem 2rem 2rem; text-align: center; }
+  .coming h2{ font-size: clamp(28px, 6vw, 48px); margin: 0 0 .3rem; letter-spacing: .06em; }
+  .features{ display:grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 1rem; max-width: 1100px; margin: 1.5rem auto 5rem; padding: 0 1rem; }
+  .feature{ padding: 1rem; border-radius: 16px; border: 1px solid rgba(130,247,255,0.2); background: linear-gradient(180deg, rgba(130,247,255,0.05), rgba(255,255,255,0.02)); }
+  .feature h3{ margin: .2rem 0 .4rem; letter-spacing: .04em; }
+  @media (max-width: 900px){ .features{ grid-template-columns: 1fr } }
 </style>
-

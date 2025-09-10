@@ -1,0 +1,55 @@
+name: "Animation Task"
+description: "Specify motion behavior with references and implementation notes"
+title: "Animation: <short title>"
+labels: ["animation", "frontend", "corvid"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Describe the motion intent with references (videos/gifs/fps). Include thresholds, timings, and reduced‑motion behavior.
+  - type: input
+    id: scene
+    attributes:
+      label: Scene/Section
+      placeholder: e.g., Parallax Crow, Hero, Features Grid
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Behavior
+      description: Narrative description of the animation
+      placeholder: e.g., On scroll, layers offset at 0.1/0.2/0.3 with subtle easing
+    validations:
+      required: true
+  - type: textarea
+    id: timings
+    attributes:
+      label: Timings & Easing
+      placeholder: e.g., 400–700ms, cubic-bezier(0.2,0.7,0,1)
+  - type: textarea
+    id: triggers
+    attributes:
+      label: Triggers
+      description: Scroll position, hover, tap, in-view thresholds
+  - type: textarea
+    id: assets
+    attributes:
+      label: Assets
+      description: SVGs, sprites, audio, Lottie, etc.
+  - type: textarea
+    id: accessibility
+    attributes:
+      label: Accessibility
+      description: Reduced motion behavior and focus/keyboard considerations
+  - type: textarea
+    id: impl
+    attributes:
+      label: Implementation Notes
+      description: Suggested components/APIs (Motion One, timelines, observers)
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance Criteria
+      description: Concrete checks to verify behavior
+
