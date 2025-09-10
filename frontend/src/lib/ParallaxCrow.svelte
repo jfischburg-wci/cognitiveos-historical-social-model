@@ -55,14 +55,18 @@
           </feMerge>
         </filter>
       </defs>
-      <!-- High-contrast full crow silhouette (approximate) -->
+      <!-- High-contrast full crow silhouette (approximate). Replace with traced SVG later. -->
       <g transform="translate(30,40)" fill="#0b0f14" stroke="#000" stroke-opacity=".35" stroke-width="0.6">
         <!-- tail -->
         <path d="M10,110 C32,100 50,95 70,100 L30,128 Z" />
         <!-- body -->
         <path d="M40,90 C40,52 98,22 170,34 C228,44 268,80 268,112 C268,146 204,164 144,156 C88,148 40,126 40,90 Z" />
-        <!-- wing (independent for flick) -->
-        <path class="wing" d="M96,78 C136,58 174,58 210,78 C190,86 172,100 126,106 Z" fill="#0c1218" />
+        <!-- wing group with layered feathers for shake/flick -->
+        <g class="wing">
+          <path class="feather f1" d="M96,78 C132,60 170,58 206,78 C188,84 168,98 126,104 Z" fill="#0c1218" />
+          <path class="feather f2" d="M96,86 C134,66 170,66 202,84 C186,90 168,102 126,108 Z" fill="#0c141a" />
+          <path class="feather f3" d="M98,92 C132,74 166,72 198,88 C182,94 166,106 126,112 Z" fill="#0d151c" />
+        </g>
         <!-- legs -->
         <path d="M140,156 l-8,26" stroke="#0e0e0e" stroke-width="3" />
         <path d="M172,156 l-6,24" stroke="#0e0e0e" stroke-width="3" />
@@ -122,10 +126,24 @@
   }
   /* Wing flick on hop */
   .crow.hop .wing{ animation: wingflick 320ms ease-out 1 }
+  .crow.hop .feather{ animation: feathershake 320ms ease-out 1 }
+  .crow.idle .feather{ animation: microshake 4.5s ease-in-out infinite }
+  .crow.idle .feather.f2{ animation-delay: .1s }
+  .crow.idle .feather.f3{ animation-delay: .2s }
   @keyframes wingflick{
     0% { transform: rotate(0deg); transform-origin: 90px 58px }
     25% { transform: rotate(-16deg) }
     60% { transform: rotate(8deg) }
     100% { transform: rotate(0deg) }
+  }
+  @keyframes feathershake{
+    0% { transform: rotate(0deg); transform-origin: 130px 90px }
+    30% { transform: rotate(-8deg) }
+    70% { transform: rotate(5deg) }
+    100% { transform: rotate(0deg) }
+  }
+  @keyframes microshake{
+    0%,100% { transform: rotate(0deg); transform-origin: 130px 90px }
+    50% { transform: rotate(-1.4deg) }
   }
 </style>
