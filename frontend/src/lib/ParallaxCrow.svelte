@@ -7,6 +7,8 @@
   let y = 0
   const handle = () => { y = window.scrollY || 0 }
   let idleTimer
+  let pressTimer
+  let container
   // Prepare traced SVG group (from potrace) for injection
   let traceGroup = ''
   let traceScale = 1
@@ -48,14 +50,52 @@
     if (withSound) dispatch('interact')
     setTimeout(() => { hopping = false }, 500)
   }
+
+  // Interaction behaviors
+  let alert = false
+  let look = 0 // -1 left, 0 center, 1 right
+  let preen = false
+  let ruffle = false
+  let peck = false
+
+  function toAlert(v=true){ alert = v }
+  function doRuffle(){ ruffle = true; setTimeout(()=> ruffle=false, 420) }
+  function doPeck(){ peck = true; setTimeout(()=> peck=false, 220) }
+  function doPreen(){ preen = true; setTimeout(()=> preen=false, 700) }
+
+  function onMouseMove(e){
+    if (!container) return
+    const rect = container.getBoundingClientRect()
+    const cx = rect.left + rect.width/2
+    look = (e.clientX < cx ? -1 : 1)
+  }
+  function onMouseLeave(){ look = 0; toAlert(false) }
+  function onMouseEnter(){ toAlert(true) }
+  function onDoubleClick(){ doRuffle() }
+  function onMouseDown(){
+    clearTimeout(pressTimer)
+    pressTimer = setTimeout(()=>{ hop(true) }, 300)
+  }
+  function onMouseUp(){ clearTimeout(pressTimer) }
+
+  let lastScroll = 0
+  function onWheel(ev){
+    const now = Date.now()
+    const dt = now - lastScroll
+    lastScroll = now
+    if (Math.abs(ev.deltaY) > 140 && dt < 200){ hop(false) }
+  }
 </script>
 
-<section class="stage" aria-label="Parallax crow">
+<section class="stage" aria-label="Parallax crow" bind:this={container} on:mouseenter={onMouseEnter} on:mousemove={onMouseMove} on:mouseleave={onMouseLeave} on:dblclick={onDoubleClick} on:mousedown={onMouseDown} on:mouseup={onMouseUp} on:wheel|passive={onWheel}>
   <div class="layer l1" style="transform: translate3d(0,{depth1}px,0);" aria-hidden="true" />
   <div class="layer l2" style="transform: translate3d(0,{depth2}px,0);" aria-hidden="true" />
   <!-- Shadow under the crow -->
   <div class="shadow {hopping ? 'squash' : ''}" aria-hidden="true"></div>
-  <div class="crow {hopping ? 'hop' : 'idle'}" in:scale={{ start: 0.9, duration: 700 }} tabindex="0" role="button" aria-label="Crow" on:click={() => hop(true)} on:keydown={(e)=> (e.key==='Enter'||e.key===' ') && (e.preventDefault(), hop(true))}>
+  <div class="crow {hopping ? 'hop' : 'idle'} {alert ? 'alert' : ''} {preen ? 'preen' : ''} {ruffle ? 'ruffle' : ''} {peck ? 'peck' : ''} look-{look}"
+    in:scale={{ start: 0.9, duration: 700 }} tabindex="0" role="button" aria-label="Crow"
+    on:click={() => hop(true)}
+    on:keydown={(e)=> (e.key==='Enter'||e.key===' ') && (e.preventDefault(), hop(true))}>
     <svg viewBox="0 0 340 220" width="100%" height="100%" role="img" aria-label="Crow silhouette">
       <defs>
         <linearGradient id="iris" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -70,6 +110,12 @@
             <feMergeNode in="SourceGraphic" />
           </feMerge>
         </filter>
+        <!-- Rim light for contrast -->
+        <linearGradient id="rim" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="#8bf0ff" stop-opacity="0.35" />
+          <stop offset="50%" stop-color="#a58bff" stop-opacity="0.3" />
+          <stop offset="100%" stop-color="#7ef7ff" stop-opacity="0.35" />
+        </linearGradient>
       </defs>
       <!-- High-contrast full crow silhouette (approximate). Replace with traced SVG later. -->
       <g transform="translate(30,40)" fill="#0b0f14" stroke="#000" stroke-opacity=".35" stroke-width="0.6">
@@ -106,19 +152,27 @@
   .shadow{ position:absolute; left:50%; transform:translateX(-50%); bottom:12%; width:min(60%,620px); height:22px; background: radial-gradient(50% 50% at 50% 50%, rgba(0,0,0,.5), rgba(0,0,0,0)); filter: blur(8px); opacity:.55 }
   .crow{ position: relative; margin: 0 auto; width: min(90%, 920px); filter: drop-shadow(0 30px 60px rgba(0,0,0,0.45)); }
   .crow.idle{ animation: bob 6s ease-in-out infinite; }
+  .crow.alert{ animation: none; transform-origin: center; animation: alertpose 220ms ease-out forwards }
   .eye{ animation: blink 6s infinite steps(1); transform-origin: center; filter: url(#glow); }
+  .trace *{ fill:#121820; stroke:url(#rim); stroke-width:.8; stroke-opacity:.5 }
   @keyframes blink{
     0%, 92%, 100% { r: 3.6 }
     94%, 96% { r: 0.8 }
   }
   /* Idle head tilt */
   .head{ transform-origin: 145px 45px; animation: headtilt 5.5s ease-in-out infinite; }
+  .crow.look--1 .head{ transform: rotate(-6deg) }
+  .crow.look-1 .head{ transform: rotate(6deg) }
+  .crow.alert .head{ animation: none; transform: rotate(3deg) }
+  .crow.preen .head{ animation: none; transform: translate(-24px,12px) rotate(-22deg) }
+  .crow.peck .head{ animation: none; transform: translate(10px,12px) rotate(16deg) }
   @keyframes headtilt{
     0%, 90%, 100% { transform: rotate(0deg) }
     40% { transform: rotate(2.2deg) }
     50% { transform: rotate(-1.5deg) }
     60% { transform: rotate(1.2deg) }
   }
+  @keyframes alertpose{ from{ transform: translateY(-2px) scale(1.01)} to{ transform: translateY(-2px) scale(1.01)} }
   /* Hop interaction */
   .crow.hop{ animation: hop 480ms cubic-bezier(.2,.7,0,1) 1; }
   .shadow.squash{ animation: squash 480ms cubic-bezier(.2,.7,0,1) 1; }
@@ -140,6 +194,8 @@
   }
   /* Wing flick on hop */
   .crow.hop .wing{ animation: wingflick 320ms ease-out 1 }
+  .crow.ruffle .wing{ animation: feathershake 420ms ease-out 1 }
+  .crow.preen .wing{ transform-origin: 130px 90px; transform: rotate(-6deg) }
   .crow.hop .feather{ animation: feathershake 320ms ease-out 1 }
   .crow.idle .feather{ animation: microshake 4.5s ease-in-out infinite }
   .crow.idle .feather.f2{ animation-delay: .1s }
