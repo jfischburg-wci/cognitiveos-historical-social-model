@@ -80,7 +80,10 @@
   <div class="bg-iris" aria-hidden="true" />
 
   <header class="hero">
-    <button class="logo" on:click={caw} aria-label="Play crow caw">CORVID</button>
+    <h1 class="sr-only">Corvid</h1>
+    <button class="logo" on:click={caw} aria-label="Play crow caw">
+      <img class="brand" src="/corvid_logo.png" alt="Corvid logo" loading="eager" />
+    </button>
     <p class="tag">Iridescent social cognition in motion</p>
   </header>
 
@@ -165,20 +168,9 @@
     padding: 7rem 2rem 2rem;
     text-align: center;
   }
-  .logo{
-    background: none; border: 0; display: inline-block;
-    font-family: ui-sans-serif, system-ui, Segoe UI, Roboto, Ubuntu, Cantarell, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
-    letter-spacing: 0.12em;
-    font-size: clamp(42px, 9vw, 120px);
-    font-weight: 800;
-    margin: 0;
-    background: linear-gradient(90deg, #9bd3ff, #a58bff, #7ef7ff 70%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    text-shadow: 0 0 18px rgba(130,247,255,0.25);
-    cursor: pointer;
-  }
+  .sr-only{ position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0 }
+  .logo{ background:none; border:0; display:inline-block; cursor:pointer; padding:0 }
+  .brand{ width: min(80vw, 720px); height:auto; filter: drop-shadow(0 10px 40px rgba(130,247,255,0.2)); }
   .tag{
     opacity: 0.8;
     margin: 0.5rem 0 0;

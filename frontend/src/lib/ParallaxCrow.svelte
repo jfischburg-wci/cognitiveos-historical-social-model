@@ -4,19 +4,30 @@
   const dispatch = createEventDispatcher()
   let y = 0
   const handle = () => { y = window.scrollY || 0 }
-  onMount(() => { handle(); window.addEventListener('scroll', handle, { passive: true }) })
-  onDestroy(() => window.removeEventListener('scroll', handle))
+  let idleTimer
+  onMount(() => {
+    handle();
+    window.addEventListener('scroll', handle, { passive: true })
+    // gentle idle hops periodically (no sound) when motion allowed
+    if (!prefersReduced) scheduleIdle()
+  })
+  onDestroy(() => { window.removeEventListener('scroll', handle); if (idleTimer) clearTimeout(idleTimer) })
   const prefersReduced = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches
   $: mult = prefersReduced ? 0.02 : 0.08
   $: depth1 = Math.min(40, y * mult)
   $: depth2 = Math.min(80, y * mult * 2)
   $: depth3 = Math.min(120, y * mult * 3)
 
+  function scheduleIdle(){
+    const next = 4500 + Math.random()*3500
+    idleTimer = setTimeout(() => { hop(false); scheduleIdle() }, next)
+  }
+
   let hopping = false
-  function triggerHop(){
+  function hop(withSound = true){
     if (hopping) return
     hopping = true
-    dispatch('interact')
+    if (withSound) dispatch('interact')
     setTimeout(() => { hopping = false }, 500)
   }
 </script>
@@ -26,7 +37,7 @@
   <div class="layer l2" style="transform: translate3d(0,{depth2}px,0);" aria-hidden="true" />
   <!-- Shadow under the crow -->
   <div class="shadow {hopping ? 'squash' : ''}" aria-hidden="true"></div>
-  <div class="crow {hopping ? 'hop' : ''}" in:scale={{ start: 0.9, duration: 700 }} tabindex="0" role="button" aria-label="Crow" on:click={triggerHop} on:keydown={(e)=> (e.key==='Enter'||e.key===' ') && (e.preventDefault(), triggerHop())}>
+  <div class="crow {hopping ? 'hop' : 'idle'}" in:scale={{ start: 0.9, duration: 700 }} tabindex="0" role="button" aria-label="Crow" on:click={() => hop(true)} on:keydown={(e)=> (e.key==='Enter'||e.key===' ') && (e.preventDefault(), hop(true))}>
     <svg viewBox="0 0 240 140" width="100%" height="100%" role="img" aria-label="Crow silhouette">
       <defs>
         <linearGradient id="iris" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -70,6 +81,7 @@
   .l3{ top: 35%; background: radial-gradient(800px 140px at 50% 50%, rgba(94,234,212,.12), transparent 60%); }
   .shadow{ position:absolute; left:50%; transform:translateX(-50%); bottom:12%; width:min(60%,620px); height:22px; background: radial-gradient(50% 50% at 50% 50%, rgba(0,0,0,.5), rgba(0,0,0,0)); filter: blur(8px); opacity:.55 }
   .crow{ position: relative; margin: 0 auto; width: min(90%, 920px); filter: drop-shadow(0 30px 60px rgba(0,0,0,0.45)); }
+  .crow.idle{ animation: bob 6s ease-in-out infinite; }
   .eye{ animation: blink 6s infinite steps(1); transform-origin: center; filter: url(#glow); }
   @keyframes blink{
     0%, 92%, 100% { r: 3.6 }
@@ -92,6 +104,10 @@
     55% { transform: translateY(0) scale(0.985) }
     100% { transform: translateY(0) scale(1) }
   }
+  @keyframes bob{
+    0%,100% { transform: translateY(0) }
+    50% { transform: translateY(-4px) }
+  }
   @keyframes squash{
     0% { transform: translateX(-50%) scaleX(1) scaleY(1); opacity:.55 }
     25% { transform: translateX(-50%) scaleX(0.9) scaleY(0.8); opacity:.45 }
@@ -102,8 +118,8 @@
   .crow.hop .wing{ animation: wingflick 320ms ease-out 1 }
   @keyframes wingflick{
     0% { transform: rotate(0deg); transform-origin: 90px 58px }
-    25% { transform: rotate(-10deg) }
-    60% { transform: rotate(6deg) }
+    25% { transform: rotate(-16deg) }
+    60% { transform: rotate(8deg) }
     100% { transform: rotate(0deg) }
   }
 </style>
