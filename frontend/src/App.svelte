@@ -2,13 +2,17 @@
   import { onMount } from 'svelte'
   import { fly } from 'svelte/transition'
   import ParallaxCrow from './lib/ParallaxCrow.svelte'
+  import SettingsPanel from './lib/SettingsPanel.svelte'
   let audio
+  let muted = false
+  let volume = 0.8
+  let reduceMotion = false
 
   // Synth fallback: raspy crow-like burst using filtered noise + short pitch drop
-  async function synthCaw() {
+  async function synthCaw(vol = 0.8) {
     try {
       const Ctx = window.AudioContext || window.webkitAudioContext
-      if (!Ctx) return
+      if (!Ctx || muted) return
       const ctx = new Ctx()
 
       const makeBurst = (offset = 0) => {
@@ -42,8 +46,8 @@
 
         // Envelope
         const g = ctx.createGain()
-        g.gain.setValueAtTime(0.0001, now)
-        g.gain.exponentialRampToValueAtTime(0.6, now + 0.015)
+        g.gain.setValueAtTime(Math.max(0.0001, 0.0001), now)
+        g.gain.exponentialRampToValueAtTime(0.6 * vol, now + 0.015)
         g.gain.exponentialRampToValueAtTime(0.0001, now + dur)
 
         noise.connect(bp).connect(drive).connect(comp).connect(g).connect(ctx.destination)
@@ -60,14 +64,17 @@
   }
 
   async function caw() {
+    if (muted) return
     if (audio && audio.play) {
       try {
         audio.currentTime = 0
+        audio.volume = volume
+        audio.muted = false
         await audio.play()
         return
       } catch {}
     }
-    await synthCaw()
+    await synthCaw(volume)
   }
   onMount(() => {
     if (audio && audio.load) {
@@ -87,7 +94,7 @@
     <p class="tag">Iridescent social cognition in motion</p>
   </header>
 
-  <ParallaxCrow on:interact={caw} />
+  <ParallaxCrow on:interact={caw} reducedMotion={reduceMotion} />
 
   <section class="cta">
     <button class="caw" on:click={caw} aria-label="Caw">
@@ -136,6 +143,7 @@
 
   <!-- Optional: place crow-caw.mp3 into frontend/public/ to enable -->
   <audio bind:this={audio} src="/crow-caw.mp3" preload="auto" />
+  <SettingsPanel bind:muted bind:volume bind:reduceMotion />
 </div>
 
 <style>

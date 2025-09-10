@@ -1,6 +1,7 @@
 <script>
   import { onMount, onDestroy, createEventDispatcher } from 'svelte'
   import { fly, scale } from 'svelte/transition'
+  export let reducedMotion = false
   const dispatch = createEventDispatcher()
   let y = 0
   const handle = () => { y = window.scrollY || 0 }
@@ -9,11 +10,12 @@
     handle();
     window.addEventListener('scroll', handle, { passive: true })
     // gentle idle hops periodically (no sound) when motion allowed
-    if (!prefersReduced) scheduleIdle()
+    if (!effectiveReduced) scheduleIdle()
   })
   onDestroy(() => { window.removeEventListener('scroll', handle); if (idleTimer) clearTimeout(idleTimer) })
   const prefersReduced = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  $: mult = prefersReduced ? 0.02 : 0.08
+  $: effectiveReduced = reducedMotion || prefersReduced
+  $: mult = effectiveReduced ? 0.02 : 0.08
   $: depth1 = Math.min(40, y * mult)
   $: depth2 = Math.min(80, y * mult * 2)
   $: depth3 = Math.min(120, y * mult * 3)
@@ -38,7 +40,7 @@
   <!-- Shadow under the crow -->
   <div class="shadow {hopping ? 'squash' : ''}" aria-hidden="true"></div>
   <div class="crow {hopping ? 'hop' : 'idle'}" in:scale={{ start: 0.9, duration: 700 }} tabindex="0" role="button" aria-label="Crow" on:click={() => hop(true)} on:keydown={(e)=> (e.key==='Enter'||e.key===' ') && (e.preventDefault(), hop(true))}>
-    <svg viewBox="0 0 240 140" width="100%" height="100%" role="img" aria-label="Crow silhouette">
+    <svg viewBox="0 0 340 220" width="100%" height="100%" role="img" aria-label="Crow silhouette">
       <defs>
         <linearGradient id="iris" x1="0%" y1="0%" x2="100%" y2="0%">
           <stop offset="0%" stop-color="#7ef7ff" />
@@ -53,20 +55,24 @@
           </feMerge>
         </filter>
       </defs>
-      <!-- Stylized crow-ish silhouette -->
-      <g transform="translate(20,20)" fill="#0f1216">
-        <path d="M0,40 C20,10 80,0 120,20 C150,35 160,60 160,80 L120,70 L70,65 L40,70 Z" fill="url(#iris)" opacity="0.25"/>
-        <path d="M0,40 C20,10 80,0 120,20 C150,35 160,60 160,80 L120,70 L70,65 L40,70 Z" />
-        <!-- simple wing shape that can flick on hop -->
-        <path class="wing" d="M60,58 C85,40 110,35 132,50 C120,55 110,60 92,64 Z" fill="#0e1115" />
-        <!-- head -->
+      <!-- High-contrast full crow silhouette (approximate) -->
+      <g transform="translate(30,40)" fill="#0b0f14" stroke="#000" stroke-opacity=".35" stroke-width="0.6">
+        <!-- tail -->
+        <path d="M10,110 C32,100 50,95 70,100 L30,128 Z" />
+        <!-- body -->
+        <path d="M40,90 C40,52 98,22 170,34 C228,44 268,80 268,112 C268,146 204,164 144,156 C88,148 40,126 40,90 Z" />
+        <!-- wing (independent for flick) -->
+        <path class="wing" d="M96,78 C136,58 174,58 210,78 C190,86 172,100 126,106 Z" fill="#0c1218" />
+        <!-- legs -->
+        <path d="M140,156 l-8,26" stroke="#0e0e0e" stroke-width="3" />
+        <path d="M172,156 l-6,24" stroke="#0e0e0e" stroke-width="3" />
+        <!-- head group with eye -->
         <g class="head">
-          <circle cx="145" cy="45" r="18" fill="#0b0e12" />
-          <!-- eye -->
-          <circle class="eye" cx="150" cy="43" r="3.6" fill="#cde8ff" />
+          <circle cx="232" cy="64" r="22" fill="#0a0d12" />
+          <circle class="eye" cx="238" cy="60" r="4" fill="#e6f6ff" />
         </g>
         <!-- beak -->
-        <polygon points="160,45 200,38 158,52" fill="#101418" />
+        <polygon points="250,62 312,50 248,78" fill="#0e1216" />
       </g>
     </svg>
   </div>
@@ -74,7 +80,7 @@
 </section>
 
 <style>
-  .stage{ position: relative; height: 60vh; max-width: 1100px; margin: 0 auto; }
+  .stage{ position: relative; height: 70vh; max-width: 1100px; margin: 0 auto; }
   .layer{ position:absolute; inset: auto 0; height: 30vh; filter: blur(40px); opacity: 0.45; }
   .l1{ top: 5%; background: radial-gradient(600px 120px at 20% 50%, rgba(126,247,255,.12), transparent 60%); }
   .l2{ top: 20%; background: radial-gradient(600px 120px at 80% 50%, rgba(165,139,255,.12), transparent 60%); }
