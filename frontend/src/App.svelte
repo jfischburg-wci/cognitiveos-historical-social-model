@@ -1,5 +1,3 @@
-Here’s a lint-clean, complete drop-in src/App.svelte that wires ambient behaviors (blink/head-bob/preen/hop + caw), respects reduceMotion, supports Enter/Space on the interactive region, and keeps your LLM reactions:
-
 <script>
   import { onMount, onDestroy } from 'svelte';
   import { fly } from 'svelte/transition';
