@@ -1,12 +1,15 @@
 <script>
   import { createEventDispatcher, onMount, onDestroy } from 'svelte';
-  export let src = '/corvid_crow_anim_v9.svg';
-  export let reduceMotion = false; // now respected
 
+  // Props
+  export let src = '/corvid_crow_anim_v9.svg';
+  export let reduceMotion = false; // respected below
+
+  // State
   const dispatch = createEventDispatcher();
   let host, svg;
 
-  // ------- one-shot helpers (toggle classes the SVG understands) -------
+  // ------- one-shots (toggle classes the SVG understands) -------
   const once = (cls, ms) =>
     new Promise((res) => {
       if (!svg) return res();
@@ -19,21 +22,6 @@
   const headBob = () => once('animate-headBob', 1200);
   const preen   = () => once('animate-preen',   2400);
   const hop     = () => { dispatch('interact'); return once('animate-hop', 900); };
-
-  const ns = 'http://www.w3.org/2000/svg';
-
-  const crowPng = svg.getElementById('crowPNG');
-  const silMask  = svg.getElementById('silMask');   // v9 uses this name
-  const crowRoot = svg.getElementById('Crow');      // main group containing parts
-  if (crowPng && silMask && crowRoot && !svg.getElementById('Underpaint')) {
-    const g = document.createElementNS(ns,'g');
-    g.setAttribute('id','Underpaint');
-    g.setAttribute('mask','url(#silMask)');
-    const u = document.createElementNS(ns,'use');
-    u.setAttribute('href','#crowPNG');
-    g.appendChild(u);
-    crowRoot.parentNode.insertBefore(g, crowRoot);  // paint underneath parts
-  }
 
   // ------- convenience: eyelid group if exported as two layers -------
   function ensureIds() {
@@ -72,7 +60,7 @@
     svg.insertBefore(style, svg.firstChild);
   }
 
-  // ------- per-mask dilation so parts overlap (no AA seams) -------
+  // ------- per-mask dilation so parts overlap (no AA slits) -------
   function dilateMask(maskId, radiusPx) {
     const ns = 'http://www.w3.org/2000/svg';
     const m = svg.getElementById(maskId);
@@ -87,17 +75,18 @@
     if (!svg.getElementById(fid)) {
       const f = document.createElementNS(ns,'filter');
       f.setAttribute('id', fid);
-      f.setAttribute('x','-10%'); f.setAttribute('y','-10%');
-      f.setAttribute('width','120%'); f.setAttribute('height','120%');
       f.setAttribute('filterUnits','userSpaceOnUse');
       f.setAttribute('primitiveUnits','userSpaceOnUse');
+      // huge bounds so the filter never clips
+      f.setAttribute('x','-10000'); f.setAttribute('y','-10000');
+      f.setAttribute('width','20000'); f.setAttribute('height','20000');
 
       const morph = document.createElementNS(ns,'feMorphology');
       morph.setAttribute('operator','dilate');
       morph.setAttribute('radius', String(radiusPx));
 
       const blur = document.createElementNS(ns,'feGaussianBlur');
-      blur.setAttribute('stdDeviation','0.15');
+      blur.setAttribute('stdDeviation','0.2');
 
       f.appendChild(morph);
       f.appendChild(blur);
@@ -111,35 +100,75 @@
     m.appendChild(wrap);
   }
 
+  // ------- generous hard clip for beaks so the tip never clips -------
+  function clipBeak(id, x0,y0,x1,y1){
+    const ns='http://www.w3.org/2000/svg';
+    const g = svg.getElementById(id); if(!g) return;
+    let defs = svg.querySelector('defs'); if(!defs){ defs=document.createElementNS(ns,'defs'); svg.insertBefore(defs, svg.firstChild); }
+    const cpid=`cp-${id}`;
+    if(!svg.getElementById(cpid)){
+      const cp=document.createElementNS(ns,'clipPath'); cp.setAttribute('id',cpid);
+      const r=document.createElementNS(ns,'rect');
+      r.setAttribute('x',x0); r.setAttribute('y',y0);
+      r.setAttribute('width',x1-x0); r.setAttribute('height',y1-y0);
+      cp.appendChild(r); defs.appendChild(cp);
+    }
+    g.setAttribute('clip-path', `url(#${cpid})`);
+  }
+
   onMount(async () => {
     const text = await fetch(src).then(r => r.text());
     host.innerHTML = text;
     svg = host.querySelector('svg') || host.firstElementChild;
 
+    // Ensure rig IDs and fallback keyframes exist
     ensureIds();
     ensureAnimationStyle();
 
-    // --- Overlap masks to remove gaps; pad beak so tip never clips ---
-    ['maskBody','maskLegL','maskLegR','maskFootL','maskFootR','maskTailA','maskTailB','maskTailC','maskTailD']
-      .forEach(id => dilateMask(id, 1.0));
-    ['maskWing','maskNeck','maskHead'].forEach(id => dilateMask(id, 0.9));
-    ['maskBeakU','maskBeakL'].forEach(id => dilateMask(id, 1.2));
+    // 1) Underpaint: paint full silhouette once under moving parts (hides any slits)
+    const ns = 'http://www.w3.org/2000/svg';
+    const crowRoot = svg.getElementById('Crow');
+    const crowPNG  = svg.getElementById('crowPNG');
+    const silMask  = svg.getElementById('silMask');
+    if (crowRoot && crowPNG && silMask && !svg.getElementById('Underpaint')) {
+      const base = document.createElementNS(ns,'g');
+      base.setAttribute('id','Underpaint');
+      base.setAttribute('mask','url(#silMask)');
+      const use = document.createElementNS(ns,'use');
+      use.setAttribute('href','#crowPNG');
+      base.appendChild(use);
+      crowRoot.parentNode.insertBefore(base, crowRoot);
+    }
+    // Optional: hide the carving source if present
+    const body = svg.getElementById('Body');
+    if (body) body.setAttribute('display','none');
 
-    // --- Ambient/UX triggers (respect reduceMotion) ---
+    // 2) Dilation across masks; extra on beaks to restore lower tip
+    ['maskLegL','maskLegR','maskFootL','maskFootR','maskTailA','maskTailB','maskTailC','maskTailD','maskWing','maskNeck','maskHead']
+      .forEach(id => dilateMask(id, 1.0));
+    ['maskBeakU','maskBeakL'].forEach(id => dilateMask(id, 1.6));
+
+    // 3) Hard clip windows for beaks (protect the very tip)
+    const vb = svg.viewBox.baseVal || { x:0,y:0,width: svg.width.baseVal.value, height: svg.height.baseVal.value };
+    const bx0 = vb.width*0.56, by0 = vb.height*0.12, bx1 = vb.width*0.98, by1 = vb.height*0.38;  // upper
+    const lx0 = vb.width*0.56, ly0 = vb.height*0.20, lx1 = vb.width*0.98, ly1 = vb.height*0.48;  // lower
+    clipBeak('BeakUpper', bx0, by0, bx1, by1);
+    clipBeak('BeakLower', lx0, ly0, lx1, ly1);
+
+    // 4) Ambient micro-behavior (respect reduceMotion)
     let idle;
     const onEnter = () => headBob();
     const onClick = () => { hop(); dispatch('interact'); };
-
     if (!reduceMotion) {
       idle = setInterval(() => blink(), 3500 + Math.random()*2500);
       host.addEventListener('mouseenter', onEnter);
       host.addEventListener('click', onClick);
     }
 
-    // Expose API upward
+    // Expose API + host el for ambient scheduler
     dispatch('ready', { api: { blink, caw, headBob, preen, hop }, el: host });
 
-    // sync with global caw events from App
+    // Global caw event → beak animation
     const onCawEvent = () => caw();
     window.addEventListener('corvid-caw', onCawEvent);
 
