@@ -20,6 +20,21 @@
   const preen   = () => once('animate-preen',   2400);
   const hop     = () => { dispatch('interact'); return once('animate-hop', 900); };
 
+  const ns = 'http://www.w3.org/2000/svg';
+
+  const crowPng = svg.getElementById('crowPNG');
+  const silMask  = svg.getElementById('silMask');   // v9 uses this name
+  const crowRoot = svg.getElementById('Crow');      // main group containing parts
+  if (crowPng && silMask && crowRoot && !svg.getElementById('Underpaint')) {
+    const g = document.createElementNS(ns,'g');
+    g.setAttribute('id','Underpaint');
+    g.setAttribute('mask','url(#silMask)');
+    const u = document.createElementNS(ns,'use');
+    u.setAttribute('href','#crowPNG');
+    g.appendChild(u);
+    crowRoot.parentNode.insertBefore(g, crowRoot);  // paint underneath parts
+  }
+
   // ------- convenience: eyelid group if exported as two layers -------
   function ensureIds() {
     if (!svg) return;
@@ -74,6 +89,8 @@
       f.setAttribute('id', fid);
       f.setAttribute('x','-10%'); f.setAttribute('y','-10%');
       f.setAttribute('width','120%'); f.setAttribute('height','120%');
+      f.setAttribute('filterUnits','userSpaceOnUse');
+      f.setAttribute('primitiveUnits','userSpaceOnUse');
 
       const morph = document.createElementNS(ns,'feMorphology');
       morph.setAttribute('operator','dilate');
@@ -106,7 +123,7 @@
     ['maskBody','maskLegL','maskLegR','maskFootL','maskFootR','maskTailA','maskTailB','maskTailC','maskTailD']
       .forEach(id => dilateMask(id, 1.0));
     ['maskWing','maskNeck','maskHead'].forEach(id => dilateMask(id, 0.9));
-    ['maskBeakU','maskBeakL'].forEach(id => dilateMask(id, 0.7));
+    ['maskBeakU','maskBeakL'].forEach(id => dilateMask(id, 1.2));
 
     // --- Ambient/UX triggers (respect reduceMotion) ---
     let idle;
@@ -120,7 +137,7 @@
     }
 
     // Expose API upward
-    dispatch('ready', { api: { blink, caw, headBob, preen, hop }});
+    dispatch('ready', { api: { blink, caw, headBob, preen, hop }, el: host });
 
     // sync with global caw events from App
     const onCawEvent = () => caw();
