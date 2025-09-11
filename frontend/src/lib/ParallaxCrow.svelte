@@ -12,12 +12,12 @@
   // Prepare traced SVG group (from potrace) for injection
   let traceGroup = ''
   let traceScale = 1
-  let traceTx = 30, traceTy = 28
+  let traceTx = 26, traceTy = 22
   {
     const vb = /viewBox="([^"]+)"/i.exec(traceRaw)
     const dims = vb ? vb[1].split(/\s+/).map(parseFloat) : [0,0,1024,1024]
     const w = dims[2] || 1024
-    const desired = 280
+    const desired = 300
     traceScale = desired / w
     const grp = traceRaw.match(/<g[\s\S]*?<\/g>/i) || traceRaw.match(/<g[^>]*>[\s\S]*<\/g>/i)
     if (grp && grp[0]) {
@@ -39,8 +39,15 @@
   $: depth3 = Math.min(120, y * mult * 3)
 
   function scheduleIdle(){
-    const next = 4500 + Math.random()*3500
-    idleTimer = setTimeout(() => { hop(false); scheduleIdle() }, next)
+    const next = 4000 + Math.random()*3000
+    idleTimer = setTimeout(() => {
+      const r = Math.random()
+      if (!effectiveReduced && r < 0.25) { hop(false) }
+      else if (r < 0.45) { doPreen() }
+      else if (r < 0.65) { doPeck() }
+      else if (r < 0.85) { doRuffle() }
+      scheduleIdle()
+    }, next)
   }
 
   let hopping = false
@@ -154,7 +161,7 @@
   .crow.idle{ animation: bob 6s ease-in-out infinite; }
   .crow.alert{ animation: none; transform-origin: center; animation: alertpose 220ms ease-out forwards }
   .eye{ animation: blink 6s infinite steps(1); transform-origin: center; filter: url(#glow); }
-  .trace *{ fill:#121820; stroke:url(#rim); stroke-width:.8; stroke-opacity:.5 }
+  .trace *{ fill:#0f151d; stroke:url(#rim); stroke-width:1.2; stroke-opacity:.7 }
   @keyframes blink{
     0%, 92%, 100% { r: 3.6 }
     94%, 96% { r: 0.8 }
@@ -178,7 +185,7 @@
   .shadow.squash{ animation: squash 480ms cubic-bezier(.2,.7,0,1) 1; }
   @keyframes hop{
     0% { transform: translateY(0) scale(1) }
-    25% { transform: translateY(-16px) scale(1.02) }
+    25% { transform: translateY(var(--hop-raise, -18px)) scale(1.02) }
     55% { transform: translateY(0) scale(0.985) }
     100% { transform: translateY(0) scale(1) }
   }
@@ -200,6 +207,13 @@
   .crow.idle .feather{ animation: microshake 4.5s ease-in-out infinite }
   .crow.idle .feather.f2{ animation-delay: .1s }
   .crow.idle .feather.f3{ animation-delay: .2s }
+  /* Mobile tuning */
+  @media (max-width: 520px){
+    .stage{ height: 60vh }
+    .crow{ width: min(96%, 760px) }
+    :root{ --hop-raise: -11px }
+    .trace *{ stroke-width: 1.0; stroke-opacity: .6 }
+  }
   @keyframes wingflick{
     0% { transform: rotate(0deg); transform-origin: 90px 58px }
     25% { transform: rotate(-16deg) }

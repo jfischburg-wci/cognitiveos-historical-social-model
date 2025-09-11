@@ -142,7 +142,10 @@
   </footer>
 
   <!-- Optional: place crow-caw.mp3 into frontend/public/ to enable -->
-  <audio bind:this={audio} src="/crow-caw.mp3" preload="auto" />
+  <audio bind:this={audio} preload="auto">
+    <source src="/crow-caw.mp3" type="audio/mpeg" />
+    <source src="/crow-caw.wav" type="audio/wav" />
+  </audio>
   <SettingsPanel bind:muted bind:volume bind:reduceMotion />
 </div>
 
