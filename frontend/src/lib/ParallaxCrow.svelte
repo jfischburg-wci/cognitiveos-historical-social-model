@@ -21,29 +21,30 @@
   let traceScale = 1
   let traceTx = 18, traceTy = -10
   let tracePathD = ''
-  let bodyPathD = ''
-  let beakUPathD = ''
-  let beakLPathD = ''
-  let wf1PathD = ''
-  let wf2PathD = ''
-  let wf3PathD = ''
-  let tailPathD = ''
+  let bodyGroup = ''
+  let beakUGroup = ''
+  let beakLGroup = ''
+  let wf1Group = ''
+  let wf2Group = ''
+  let wf3Group = ''
+  let tailGroup = ''
   {
-    const vb = /viewBox="([^"]+)"/i.exec(traceRaw)
-    const dims = vb ? vb[1].split(/\s+/).map(parseFloat) : [0,0,1024,1024]
-    const w = dims[2] || 1024
+    const getDims = raw => { const m=/viewBox="([^"]+)"/i.exec(raw||''); if(!m) return [0,0,1024,1024]; return m[1].split(/\s+/).map(parseFloat) }
+    const bodyDims = getDims(bodyRaw)
+    const w = bodyDims[2] || 1024
     const desired = 240
     traceScale = desired / w
     const path = traceRaw.match(/<path[^>]*d=\"([^\"]+)\"/i)
     if (path && path[1]) tracePathD = path[1]
-    const pick = (raw)=>{ const m = raw && raw.match(/<path[^>]*d=\"([^\"]+)\"/i); return m?m[1]:'' }
-    bodyPathD = pick(bodyRaw)
-    beakUPathD = pick(beakUpperRaw)
-    beakLPathD = pick(beakLowerRaw)
-    wf1PathD = pick(wingF1Raw)
-    wf2PathD = pick(wingF2Raw)
-    wf3PathD = pick(wingF3Raw)
-    tailPathD = pick(tailRaw)
+    const groupOf = raw => { const g = raw && raw.match(/<g[\s\S]*?<\/g>/i); return g? g[0] : '' }
+    const tint = g => g? g.replace(/fill="#000000"/gi,'fill="#121c26"').replace(/stroke="[^"]*"/gi,'') : ''
+    bodyGroup = tint(groupOf(bodyRaw))
+    beakUGroup = tint(groupOf(beakUpperRaw))
+    beakLGroup = tint(groupOf(beakLowerRaw))
+    wf1Group = tint(groupOf(wingF1Raw))
+    wf2Group = tint(groupOf(wingF2Raw))
+    wf3Group = tint(groupOf(wingF3Raw))
+    tailGroup = tint(groupOf(tailRaw))
   }
   onMount(() => {
     handle();
@@ -160,36 +161,26 @@
         </linearGradient>
         <!-- Clip path of traced silhouette for internal layers -->
         <clipPath id="crowClip">
-          <g transform="translate({traceTx},{traceTy}) scale({traceScale})">
-            {#if tracePathD}
-              <path d={tracePathD} />
-            {/if}
-          </g>
+          <g transform="translate({traceTx},{traceTy}) scale({traceScale})">{@html bodyGroup || ''}</g>
         </clipPath>
       </defs>
       <!-- Traced silhouette and clipped animation layers -->
       <g transform="translate(30,40)" fill="#0b0f14" stroke="#000" stroke-opacity=".35" stroke-width="0.6">
-        <!-- silhouette render (precise body path if available) -->
-        <g transform="translate({traceTx},{traceTy}) scale({traceScale})">
-          {#if bodyPathD}
-            <path class="sil" d={bodyPathD} />
-          {:else if tracePathD}
-            <path class="sil" d={tracePathD} />
-          {/if}
-        </g>
+        <!-- silhouette render (precise body group if available) -->
+        <g class="sil" transform="translate({traceTx},{traceTy}) scale({traceScale})">{@html bodyGroup || ''}</g>
         <!-- layers clipped to silhouette; transform to traced coordinate space -->
         <g clip-path="url(#crowClip)" transform="translate({traceTx},{traceTy}) scale({traceScale})">
           <!-- wing group with layered feathers for shake/flick -->
           <g class="wing">
-            {#if wf1PathD}<path class="feather f1" d={wf1PathD} fill="#0c1218" />{/if}
-            {#if wf2PathD}<path class="feather f2" d={wf2PathD} fill="#0c141a" />{/if}
-            {#if wf3PathD}<path class="feather f3" d={wf3PathD} fill="#0d151c" />{/if}
+            {@html (wf1Group||'').replace(/fill="#121c26"/g,'fill="#0c1218"')}
+            {@html (wf2Group||'').replace(/fill="#121c26"/g,'fill="#0c141a"')}
+            {@html (wf3Group||'').replace(/fill="#121c26"/g,'fill="#0d151c"')}
           </g>
           <!-- articulating beak (split upper/lower) -->
-          <g class="beak-upper">{#if beakUPathD}<path d={beakUPathD} fill="#12171d" />{/if}</g>
-          <g class="beak-lower">{#if beakLPathD}<path d={beakLPathD} fill="#0d1319" />{/if}</g>
+          <g class="beak-upper">{@html beakUGroup || ''}</g>
+          <g class="beak-lower">{@html beakLGroup || ''}</g>
           <!-- tail (overlay for twitch) -->
-          {#if tailPathD}<path class="tailpath" d={tailPathD} fill="#0b0f14" />{/if}
+          <g class="tailpath">{@html tailGroup || ''}</g>
           <!-- Minimal legs and eye approximations (outside trace parts) are omitted to avoid misalignment -->
         </g>
       </g>
@@ -210,7 +201,7 @@
   .crow.idle{ animation: bob 6s ease-in-out infinite; }
   .crow.alert{ animation: none; transform-origin: center; animation: alertpose 220ms ease-out forwards }
   .eye{ animation: blink 6s infinite steps(1); transform-origin: center; filter: url(#glow); }
-  .sil{ fill:#121c26; stroke:url(#rim); stroke-width:1.8; stroke-opacity:.9 }
+  .sil *{ fill:#121c26; stroke:url(#rim); stroke-width:2.4; stroke-opacity:.95; vector-effect: non-scaling-stroke; filter: drop-shadow(0 2px 2px rgba(0,0,0,.6)) }
   @keyframes blink{
     0%, 92%, 100% { r: 3.6 }
     94%, 96% { r: 0.8 }
