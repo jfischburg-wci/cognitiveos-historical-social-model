@@ -1,0 +1,29 @@
+/* Core: we animate by adding classes on the outer .crow wrapper */
+.crow svg .rig, .crow svg [id] { transform-box: fill-box; }
+
+/* ---------- Keyframes ---------- */
+@keyframes headBob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(6px)} }
+@keyframes blink { 0%,92%,100%{transform:scaleY(1)} 94%{transform:scaleY(.15)} 96%{transform:scaleY(1)} }
+@keyframes preen { 0%,100%{transform:rotate(0)} 40%{transform:rotate(-4deg)} 60%{transform:rotate(3deg)} }
+@keyframes hop { 0%,100%{transform:translateY(0)} 30%{transform:translateY(-20px)} 60%{transform:translateY(-8px)} }
+@keyframes beakOpen { 0%,100%{transform:rotate(0)} 30%{transform:rotate(-12deg)} }
+@keyframes beakLower { 0%,100%{transform:rotate(0)} 30%{transform:rotate(14deg)} }
+
+/* Pivots via CSS vars so you can nudge without editing CSS */
+.crow{ --head-origin:50% 20%; --wing-origin:33% 36%; --beakU-origin:60% 23%; --beakL-origin:61% 26%; }
+
+/* ---------- Looping cycles (toggle on/off) ---------- */
+.crow.loop-headBob  #Head      { transform-origin: var(--head-origin); animation: headBob 1.2s ease-in-out infinite; }
+.crow.loop-preen    #Wing      { transform-origin: var(--wing-origin); animation: preen 2.4s ease-in-out infinite; }
+.crow.loop-hop      #Crow      { animation: hop .9s cubic-bezier(.3,.6,.3,1) infinite; }
+
+/* ---------- One-shot cycles (auto-removed by JS) ---------- */
+.crow.play-blink    #EyelidUpper,
+.crow.play-blink    #EyelidLower{ transform-origin: center; animation: blink .24s 1; }
+.crow.play-caw      #BeakUpper { transform-origin: var(--beakU-origin); animation: beakOpen .6s 1; }
+.crow.play-caw      #BeakLower { transform-origin: var(--beakL-origin); animation: beakLower .6s 1; }
+
+/* Optional: tiny tail twitch during preen */
+.crow.loop-preen #TailA, .crow.loop-preen #TailB, .crow.loop-preen #TailC, .crow.loop-preen #TailD{
+  animation: preen 2.4s ease-in-out infinite;
+}
