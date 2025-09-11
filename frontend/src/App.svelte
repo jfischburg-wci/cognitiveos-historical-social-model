@@ -71,10 +71,12 @@
         audio.volume = volume
         audio.muted = false
         await audio.play()
+        try { window.dispatchEvent(new CustomEvent('corvid-caw')) } catch {}
         return
       } catch {}
     }
     await synthCaw(volume)
+    try { window.dispatchEvent(new CustomEvent('corvid-caw')) } catch {}
   }
   onMount(() => {
     if (audio && audio.load) {

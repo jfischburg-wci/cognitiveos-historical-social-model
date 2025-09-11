@@ -65,12 +65,14 @@
   let ruffle = false
   let peck = false
   let tail = false
+  let cawOpen = false
 
   function toAlert(v=true){ alert = v }
   function doRuffle(){ ruffle = true; setTimeout(()=> ruffle=false, 420) }
   function doPeck(){ peck = true; setTimeout(()=> peck=false, 220) }
   function doTail(){ tail = true; setTimeout(()=> tail=false, 300) }
   function doPreen(){ preen = true; setTimeout(()=> preen=false, 700) }
+  function openBeak(){ cawOpen = true; setTimeout(()=> cawOpen = false, 260) }
 
   function onMouseMove(e){
     if (!container) return
@@ -83,7 +85,7 @@
   function onDoubleClick(){ doRuffle() }
   function onMouseDown(){
     clearTimeout(pressTimer)
-    pressTimer = setTimeout(()=>{ hop(true) }, 300)
+    pressTimer = setTimeout(()=>{ openBeak(); hop(true) }, 300)
   }
   function onMouseUp(){ clearTimeout(pressTimer) }
 
@@ -94,6 +96,13 @@
     lastScroll = now
     if (Math.abs(ev.deltaY) > 140 && dt < 200){ hop(false) }
   }
+
+  // Listen for global caw events from App
+  onMount(()=>{
+    const handler = ()=> openBeak()
+    window.addEventListener('corvid-caw', handler)
+    return ()=> window.removeEventListener('corvid-caw', handler)
+  })
 </script>
 
 <section class="stage" aria-label="Parallax crow" bind:this={container} on:mouseenter={onMouseEnter} on:mousemove={onMouseMove} on:mouseleave={onMouseLeave} on:dblclick={onDoubleClick} on:mousedown={onMouseDown} on:mouseup={onMouseUp} on:wheel|passive={onWheel}>
@@ -103,7 +112,7 @@
   <div class="backplate" aria-hidden="true"></div>
   <!-- Shadow under the crow -->
   <div class="shadow {hopping ? 'squash' : ''}" aria-hidden="true"></div>
-  <div class="crow {hopping ? 'hop' : 'idle'} {alert ? 'alert' : ''} {preen ? 'preen' : ''} {ruffle ? 'ruffle' : ''} {peck ? 'peck' : ''} look-{look}"
+  <div class="crow {hopping ? 'hop' : 'idle'} {cawOpen ? 'caw' : ''} {alert ? 'alert' : ''} {preen ? 'preen' : ''} {ruffle ? 'ruffle' : ''} {peck ? 'peck' : ''} look-{look}"
     in:scale={{ start: 0.9, duration: 700 }} tabindex="0" role="button" aria-label="Crow"
     on:click={() => hop(true)}
     on:keydown={(e)=> (e.key==='Enter'||e.key===' ') && (e.preventDefault(), hop(true))}>
@@ -146,17 +155,24 @@
         </g>
         <!-- layers clipped to silhouette -->
         <g clip-path="url(#crowClip)">
-        <!-- wing group with layered feathers for shake/flick -->
-        <g class="wing">
-          <path class="feather f1" d="M96,78 C132,60 170,58 206,78 C188,84 168,98 126,104 Z" fill="#0c1218" />
-          <path class="feather f2" d="M96,86 C134,66 170,66 202,84 C186,90 168,102 126,108 Z" fill="#0c141a" />
-          <path class="feather f3" d="M98,92 C132,74 166,72 198,88 C182,94 166,106 126,112 Z" fill="#0d151c" />
-        </g>
-        <!-- tail (overlay for twitch) -->
-        <path class="tailpath" d="M10,110 C32,100 50,95 70,100 L30,128 Z" fill="#0b0f14" />
-        <!-- legs (overlay) -->
-        <path d="M140,156 l-8,26" stroke="#0e0e0e" stroke-width="3" />
-        <path d="M172,156 l-6,24" stroke="#0e0e0e" stroke-width="3" />
+          <!-- wing group with layered feathers for shake/flick -->
+          <g class="wing">
+            <path class="feather f1" d="M96,78 C132,60 170,58 206,78 C188,84 168,98 126,104 Z" fill="#0c1218" />
+            <path class="feather f2" d="M96,86 C134,66 170,66 202,84 C186,90 168,102 126,108 Z" fill="#0c141a" />
+            <path class="feather f3" d="M98,92 C132,74 166,72 198,88 C182,94 166,106 126,112 Z" fill="#0d151c" />
+          </g>
+          <!-- articulating beak (split upper/lower) -->
+          <g class="beak-upper">
+            <path d="M232,56 C254,50 274,46 312,46 C286,52 268,60 248,66 C242,62 238,59 232,56 Z" fill="#12171d" />
+          </g>
+          <g class="beak-lower">
+            <path d="M236,62 C254,66 270,68 300,66 C280,72 262,76 246,78 C242,74 239,68 236,62 Z" fill="#0d1319" />
+          </g>
+          <!-- tail (overlay for twitch) -->
+          <path class="tailpath" d="M10,110 C32,100 50,95 70,100 L30,128 Z" fill="#0b0f14" />
+          <!-- legs (overlay) -->
+          <path d="M140,156 l-8,26" stroke="#0e0e0e" stroke-width="3" />
+          <path d="M172,156 l-6,24" stroke="#0e0e0e" stroke-width="3" />
         <!-- head group with eye (overlay) -->
         <g class="head">
           <circle cx="232" cy="64" r="22" fill="#0a0d12" />
@@ -232,6 +248,13 @@
   .crow.hop .wing{ animation: wingflick 320ms ease-out 1 }
   .crow.ruffle .wing{ animation: feathershake 420ms ease-out 1 }
   .crow.preen .wing{ transform-origin: 130px 90px; transform: rotate(-6deg) }
+  /* Beak articulation */
+  .beak-upper{ transform-origin: 236px 60px }
+  .beak-lower{ transform-origin: 238px 64px }
+  .crow.caw .beak-upper, .crow.hop .beak-upper{ animation: beakup 240ms ease-out 1 }
+  .crow.caw .beak-lower, .crow.hop .beak-lower{ animation: beaklo 240ms ease-out 1 }
+  @keyframes beakup{ 0%{ transform: rotate(0) } 40%{ transform: rotate(-12deg) } 100%{ transform: rotate(0) } }
+  @keyframes beaklo{ 0%{ transform: rotate(0) } 40%{ transform: rotate(10deg) } 100%{ transform: rotate(0) } }
   .crow.hop .feather{ animation: feathershake 320ms ease-out 1 }
   .crow.idle .feather{ animation: microshake 4.5s ease-in-out infinite }
   .crow.idle .feather.f2{ animation-delay: .1s }
