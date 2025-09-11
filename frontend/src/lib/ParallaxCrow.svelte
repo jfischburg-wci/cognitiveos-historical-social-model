@@ -9,20 +9,19 @@
   let idleTimer
   let pressTimer
   let container
-  // Prepare traced SVG group (from potrace) for injection
+  // Prepare traced SVG content (from potrace)
   let traceGroup = ''
   let traceScale = 1
   let traceTx = 20, traceTy = 16
+  let tracePathD = ''
   {
     const vb = /viewBox="([^"]+)"/i.exec(traceRaw)
     const dims = vb ? vb[1].split(/\s+/).map(parseFloat) : [0,0,1024,1024]
     const w = dims[2] || 1024
     const desired = 330
     traceScale = desired / w
-    const grp = traceRaw.match(/<g[\s\S]*?<\/g>/i) || traceRaw.match(/<g[^>]*>[\s\S]*<\/g>/i)
-    if (grp && grp[0]) {
-      traceGroup = grp[0].replace(/fill="#000000"/gi, 'fill="#0b0f14"')
-    }
+    const path = traceRaw.match(/<path[^>]*d=\"([^\"]+)\"/i)
+    if (path && path[1]) tracePathD = path[1]
   }
   onMount(() => {
     handle();
@@ -128,11 +127,25 @@
           <stop offset="50%" stop-color="#a58bff" stop-opacity="0.3" />
           <stop offset="100%" stop-color="#7ef7ff" stop-opacity="0.35" />
         </linearGradient>
+        <!-- Clip path of traced silhouette for internal layers -->
+        <clipPath id="crowClip">
+          <g transform="translate({traceTx},{traceTy}) scale({traceScale})">
+            {#if tracePathD}
+              <path d={tracePathD} />
+            {/if}
+          </g>
+        </clipPath>
       </defs>
-      <!-- High-contrast full crow silhouette (approximate). Replace with traced SVG later. -->
+      <!-- Traced silhouette and clipped animation layers -->
       <g transform="translate(30,40)" fill="#0b0f14" stroke="#000" stroke-opacity=".35" stroke-width="0.6">
-        <!-- traced silhouette (injected) -->
-        <g class="trace" transform="translate({traceTx},{traceTy}) scale({traceScale})" aria-hidden="true">{@html traceGroup}</g>
+        <!-- silhouette render -->
+        <g transform="translate({traceTx},{traceTy}) scale({traceScale})">
+          {#if tracePathD}
+            <path class="sil" d={tracePathD} />
+          {/if}
+        </g>
+        <!-- layers clipped to silhouette -->
+        <g clip-path="url(#crowClip)">
         <!-- wing group with layered feathers for shake/flick -->
         <g class="wing">
           <path class="feather f1" d="M96,78 C132,60 170,58 206,78 C188,84 168,98 126,104 Z" fill="#0c1218" />
@@ -151,6 +164,7 @@
         </g>
         <!-- beak -->
         <polygon points="250,62 312,50 248,78" fill="#0e1216" />
+        </g>
       </g>
     </svg>
   </div>
@@ -169,7 +183,7 @@
   .crow.idle{ animation: bob 6s ease-in-out infinite; }
   .crow.alert{ animation: none; transform-origin: center; animation: alertpose 220ms ease-out forwards }
   .eye{ animation: blink 6s infinite steps(1); transform-origin: center; filter: url(#glow); }
-  .trace *{ fill:#121c26; stroke:url(#rim); stroke-width:1.8; stroke-opacity:.9 }
+  .sil{ fill:#121c26; stroke:url(#rim); stroke-width:1.8; stroke-opacity:.9 }
   @keyframes blink{
     0%, 92%, 100% { r: 3.6 }
     94%, 96% { r: 0.8 }
