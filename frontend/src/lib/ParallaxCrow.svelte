@@ -2,6 +2,13 @@
   import { onMount, onDestroy, createEventDispatcher } from 'svelte'
   import { fly, scale } from 'svelte/transition'
   import traceRaw from '../assets/crow_trace.svg?raw'
+  import bodyRaw from '../assets/parts/body.svg?raw'
+  import beakUpperRaw from '../assets/parts/beak_upper.svg?raw'
+  import beakLowerRaw from '../assets/parts/beak_lower.svg?raw'
+  import wingF1Raw from '../assets/parts/wing_f1.svg?raw'
+  import wingF2Raw from '../assets/parts/wing_f2.svg?raw'
+  import wingF3Raw from '../assets/parts/wing_f3.svg?raw'
+  import tailRaw from '../assets/parts/tail.svg?raw'
   export let reducedMotion = false
   const dispatch = createEventDispatcher()
   let y = 0
@@ -14,6 +21,13 @@
   let traceScale = 1
   let traceTx = 20, traceTy = 16
   let tracePathD = ''
+  let bodyPathD = ''
+  let beakUPathD = ''
+  let beakLPathD = ''
+  let wf1PathD = ''
+  let wf2PathD = ''
+  let wf3PathD = ''
+  let tailPathD = ''
   {
     const vb = /viewBox="([^"]+)"/i.exec(traceRaw)
     const dims = vb ? vb[1].split(/\s+/).map(parseFloat) : [0,0,1024,1024]
@@ -22,6 +36,14 @@
     traceScale = desired / w
     const path = traceRaw.match(/<path[^>]*d=\"([^\"]+)\"/i)
     if (path && path[1]) tracePathD = path[1]
+    const pick = (raw)=>{ const m = raw && raw.match(/<path[^>]*d=\"([^\"]+)\"/i); return m?m[1]:'' }
+    bodyPathD = pick(bodyRaw)
+    beakUPathD = pick(beakUpperRaw)
+    beakLPathD = pick(beakLowerRaw)
+    wf1PathD = pick(wingF1Raw)
+    wf2PathD = pick(wingF2Raw)
+    wf3PathD = pick(wingF3Raw)
+    tailPathD = pick(tailRaw)
   }
   onMount(() => {
     handle();
@@ -147,9 +169,11 @@
       </defs>
       <!-- Traced silhouette and clipped animation layers -->
       <g transform="translate(30,40)" fill="#0b0f14" stroke="#000" stroke-opacity=".35" stroke-width="0.6">
-        <!-- silhouette render -->
+        <!-- silhouette render (precise body path if available) -->
         <g transform="translate({traceTx},{traceTy}) scale({traceScale})">
-          {#if tracePathD}
+          {#if bodyPathD}
+            <path class="sil" d={bodyPathD} />
+          {:else if tracePathD}
             <path class="sil" d={tracePathD} />
           {/if}
         </g>
@@ -157,19 +181,15 @@
         <g clip-path="url(#crowClip)">
           <!-- wing group with layered feathers for shake/flick -->
           <g class="wing">
-            <path class="feather f1" d="M96,78 C132,60 170,58 206,78 C188,84 168,98 126,104 Z" fill="#0c1218" />
-            <path class="feather f2" d="M96,86 C134,66 170,66 202,84 C186,90 168,102 126,108 Z" fill="#0c141a" />
-            <path class="feather f3" d="M98,92 C132,74 166,72 198,88 C182,94 166,106 126,112 Z" fill="#0d151c" />
+            {#if wf1PathD}<path class="feather f1" d={wf1PathD} fill="#0c1218" />{:else}<path class="feather f1" d="M96,78 C132,60 170,58 206,78 C188,84 168,98 126,104 Z" fill="#0c1218" />{/if}
+            {#if wf2PathD}<path class="feather f2" d={wf2PathD} fill="#0c141a" />{:else}<path class="feather f2" d="M96,86 C134,66 170,66 202,84 C186,90 168,102 126,108 Z" fill="#0c141a" />{/if}
+            {#if wf3PathD}<path class="feather f3" d={wf3PathD} fill="#0d151c" />{:else}<path class="feather f3" d="M98,92 C132,74 166,72 198,88 C182,94 166,106 126,112 Z" fill="#0d151c" />{/if}
           </g>
           <!-- articulating beak (split upper/lower) -->
-          <g class="beak-upper">
-            <path d="M232,56 C254,50 274,46 312,46 C286,52 268,60 248,66 C242,62 238,59 232,56 Z" fill="#12171d" />
-          </g>
-          <g class="beak-lower">
-            <path d="M236,62 C254,66 270,68 300,66 C280,72 262,76 246,78 C242,74 239,68 236,62 Z" fill="#0d1319" />
-          </g>
+          <g class="beak-upper">{#if beakUPathD}<path d={beakUPathD} fill="#12171d" />{/if}</g>
+          <g class="beak-lower">{#if beakLPathD}<path d={beakLPathD} fill="#0d1319" />{/if}</g>
           <!-- tail (overlay for twitch) -->
-          <path class="tailpath" d="M10,110 C32,100 50,95 70,100 L30,128 Z" fill="#0b0f14" />
+          {#if tailPathD}<path class="tailpath" d={tailPathD} fill="#0b0f14" />{:else}<path class="tailpath" d="M10,110 C32,100 50,95 70,100 L30,128 Z" fill="#0b0f14" />{/if}
           <!-- legs (overlay) -->
           <path d="M140,156 l-8,26" stroke="#0e0e0e" stroke-width="3" />
           <path d="M172,156 l-6,24" stroke="#0e0e0e" stroke-width="3" />
