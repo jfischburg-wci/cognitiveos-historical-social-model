@@ -1,47 +1,89 @@
 <script>
-  import { onMount, onDestroy, createEventDispatcher } from 'svelte'
-  const SRC = '/corvid_crow_anim_v9.svg'
-  let container
-  let svg
-  const dispatch = createEventDispatcher()
+  import { createEventDispatcher, onMount, onDestroy } from 'svelte';
+  export let src = '/corvid_crow_anim_v9.svg';
+  export const reduceMotion = false;
 
-  // Helper: run a one-shot animation class on the root <svg>
-  function run(animClass, dur = 600) {
-    if (!svg) return
-    svg.classList.add(animClass)
-    const t = setTimeout(() => svg && svg.classList.remove(animClass), dur)
-    return () => clearTimeout(t)
+  const dispatch = createEventDispatcher();
+  let host, svg;
+
+  // Helper to add an animation class and remove it after a duration
+  const once = (cls, ms) =>
+    new Promise((resolve) => {
+      if (!svg) return resolve();
+      svg.classList.add(cls);
+      setTimeout(() => {
+        svg.classList.remove(cls);
+        resolve();
+      }, ms);
+    });
+
+  // Exposed one-shot actions
+  function blink()   { return once('animate-blink', 240); }
+  function caw()     { return once('animate-caw', 600); }
+  function headBob() { return once('animate-headBob', 1200); }
+  function preen()   { return once('animate-preen', 2400); }
+  function hop()     { dispatch('interact'); return once('animate-hop', 900); }
+
+  // Remove hairline seams between eye and wing by nudging masked groups
+  function nudgeSeams() {
+    const nudge = (id, dx = 0, dy = 0) => {
+      const g = svg?.getElementById(id);
+      if (g) {
+        const prev = g.getAttribute('transform') || '';
+        g.setAttribute('transform', `${prev} translate(${dx},${dy})`);
+      }
+    };
+    nudge('Head', -0.35, 0);
+    nudge('Neck', -0.20, 0);
+    nudge('Body',  0.35, 0);
+    nudge('Wing',  0,   -0.15);
+    nudge('Tail', -0.25, 0);
+    nudge('Legs',  0.15, 0);
+    nudge('Feet',  0.15, 0);
   }
 
-  // Public triggers (can be called by parent if bound via bind:this)
-  export function headBob() { run('animate-headBob', 1200) }
-  export function blink()   { run('animate-blink', 350) }
-  export function preen()   { run('animate-preen', 1800) }
-  export function hop()     { run('animate-hop', 900); dispatch('interact') }
-  export function caw()     { run('animate-caw', 600); dispatch('interact') }
+  // Ensure eyelid groups exist for blink to work
+  function ensureIds() {
+    if (!svg) return;
+    const up = svg.getElementById('EyelidUpper');
+    const lo = svg.getElementById('EyelidLower');
+    if (up && lo && !svg.getElementById('Eyelids')) {
+      const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      g.setAttribute('id', 'Eyelids');
+      up.parentNode.insertBefore(g, up);
+      g.appendChild(up);
+      g.appendChild(lo);
+    }
+  }
 
-  function onCawEvent() { caw() }
+  // Trigger caw on custom window event
+  function onCawEvent() {
+    caw();
+  }
 
   onMount(async () => {
-    try {
-      const res = await fetch(SRC)
-      const text = await res.text()
-      container.innerHTML = text
-      svg = container.querySelector('svg')
-      if (svg) svg.setAttribute('role', 'img')
-    } catch {}
-    window.addEventListener('corvid-caw', onCawEvent)
-  })
-  onDestroy(() => { window.removeEventListener('corvid-caw', onCawEvent) })
+    const text = await fetch(src).then((r) => r.text());
+    host.innerHTML = text;
+    svg = host.querySelector('svg') || host.firstElementChild;
+    ensureIds();
+    nudgeSeams();
+
+    // Dispatch ready event with API for parent
+    dispatch('ready', { api: { blink, caw, headBob, preen, hop } });
+
+    window.addEventListener('corvid-caw', onCawEvent);
+  });
+
+  onDestroy(() => {
+    window.removeEventListener('corvid-caw', onCawEvent);
+  });
 </script>
 
-<section class="stage" aria-label="Crow rig">
-  <div class="crow" bind:this={container} />
-</section>
+<div class="crow" bind:this={host} aria-label="Crow rig"></div>
 
 <style>
-  .stage{ position: relative; display:flex; justify-content:center; margin: 0 auto; }
-  .crow{ width: min(90%, 920px); filter: drop-shadow(0 30px 60px rgba(0,0,0,0.45)); }
-  .crow svg{ display:block; width:100%; height:auto }
+  .crow :global(.rig),
+  .crow :global([id]) {
+    transform-box: fill-box;
+  }
 </style>
-
