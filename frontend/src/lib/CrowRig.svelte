@@ -9,21 +9,11 @@
   const dispatch = createEventDispatcher();
   let host, svg;
 
-  // ------- one-shots (toggle classes the SVG understands) -------
-  const once = (cls, ms) =>
-    new Promise((res) => {
-      if (!svg) return res();
-      svg.classList.add(cls);
-      setTimeout(() => { svg.classList.remove(cls); res(); }, ms);
-    });
+  /* -------------------------------------------------------------
+     Utilities
+  ------------------------------------------------------------- */
 
-  const blink   = () => once('animate-blink',   240);
-  const caw     = () => once('animate-caw',     600);
-  const headBob = () => once('animate-headBob', 1200);
-  const preen   = () => once('animate-preen',   2400);
-  const hop     = () => { dispatch('interact'); return once('animate-hop', 900); };
-
-  // ------- convenience: eyelid group if exported as two layers -------
+  // Ensure eyelid group exists (some exports split into upper/lower only)
   function ensureIds() {
     if (!svg) return;
     const up = svg.getElementById('EyelidUpper');
@@ -36,7 +26,7 @@
     }
   }
 
-  // ------- inject fallback animation CSS if asset didn’t ship with it -------
+  // Inject fallback keyframes/classes if the SVG didn’t ship with them
   function ensureAnimationStyle() {
     if (!svg) return;
     const has = Array.from(svg.querySelectorAll('style')).some(s => s.textContent.includes('animate-headBob'));
@@ -60,17 +50,15 @@
     svg.insertBefore(style, svg.firstChild);
   }
 
-  // ------- per-mask dilation so parts overlap (no AA slits) -------
+  // Slightly dilate a mask so adjacent parts overlap (prevents AA slits)
   function dilateMask(maskId, radiusPx) {
     const ns = 'http://www.w3.org/2000/svg';
     const m = svg.getElementById(maskId);
     if (!m) return;
 
-    // ensure <defs>
     let defs = svg.querySelector('defs');
     if (!defs) { defs = document.createElementNS(ns,'defs'); svg.insertBefore(defs, svg.firstChild); }
 
-    // build filter if missing
     const fid = `exp-${maskId}`;
     if (!svg.getElementById(fid)) {
       const f = document.createElementNS(ns,'filter');
@@ -93,40 +81,144 @@
       defs.appendChild(f);
     }
 
-    // wrap mask children so the filter applies
     const wrap = document.createElementNS(ns,'g');
     wrap.setAttribute('filter', `url(#${fid})`);
     while (m.firstChild) wrap.appendChild(m.firstChild);
     m.appendChild(wrap);
   }
 
-  // ------- generous hard clip for beaks so the tip never clips -------
-  function clipBeak(id, x0,y0,x1,y1){
+  // Hard clip rectangles for beaks so the tip never clips
+  function clipBeak(id, x0, y0, x1, y1) {
     const ns='http://www.w3.org/2000/svg';
-    const g = svg.getElementById(id); if(!g) return;
-    let defs = svg.querySelector('defs'); if(!defs){ defs=document.createElementNS(ns,'defs'); svg.insertBefore(defs, svg.firstChild); }
-    const cpid=`cp-${id}`;
-    if(!svg.getElementById(cpid)){
-      const cp=document.createElementNS(ns,'clipPath'); cp.setAttribute('id',cpid);
-      const r=document.createElementNS(ns,'rect');
-      r.setAttribute('x',x0); r.setAttribute('y',y0);
-      r.setAttribute('width',x1-x0); r.setAttribute('height',y1-y0);
+    const g = svg.getElementById(id); if (!g) return;
+    let defs = svg.querySelector('defs'); if (!defs) { defs = document.createElementNS(ns,'defs'); svg.insertBefore(defs, svg.firstChild); }
+    const cpid = `cp-${id}`;
+    if (!svg.getElementById(cpid)) {
+      const cp = document.createElementNS(ns,'clipPath'); cp.setAttribute('id', cpid);
+      const r  = document.createElementNS(ns,'rect');
+      r.setAttribute('x', x0); r.setAttribute('y', y0);
+      r.setAttribute('width', x1 - x0); r.setAttribute('height', y1 - y0);
       cp.appendChild(r); defs.appendChild(cp);
     }
     g.setAttribute('clip-path', `url(#${cpid})`);
   }
 
+  // Set anatomical transform origins (px) for natural motion
+  function prepareRig() {
+    const setOrigin = (id, x, y) => {
+      const el = svg.getElementById(id);
+      if (el) el.style.transformOrigin = `${x}px ${y}px`;
+      return el;
+    };
+    const vb = svg.viewBox.baseVal || { x:0, y:0, width: svg.width.baseVal.value, height: svg.height.baseVal.value };
+    const HEAD = { x: vb.width*0.50, y: vb.height*0.20 };
+    const WING = { x: vb.width*0.33, y: vb.height*0.36 };
+    const BU   = { x: vb.width*0.60, y: vb.height*0.23 };
+    const BL   = { x: vb.width*0.61, y: vb.height*0.26 };
+    const TAIL = { x: vb.width*0.19, y: vb.height*0.62 };
+    const LFOOT= { x: vb.width*0.37, y: vb.height*0.82 };
+    const RFOOT= { x: vb.width*0.49, y: vb.height*0.82 };
+
+    setOrigin('Head', HEAD.x, HEAD.y);
+    setOrigin('Wing', WING.x, WING.y);
+    setOrigin('BeakUpper', BU.x, BU.y);
+    setOrigin('BeakLower', BL.x, BL.y);
+    ['TailA','TailB','TailC','TailD'].forEach(id => setOrigin(id, TAIL.x, TAIL.y));
+    setOrigin('FootLeft',  LFOOT.x, LFOOT.y);
+    setOrigin('FootRight', RFOOT.x, RFOOT.y);
+
+    // Hint to engines that these nodes will animate transforms
+    ['Crow','Head','Wing','BeakUpper','BeakLower','TailA','TailB','TailC','TailD','Legs','Feet','FootLeft','FootRight']
+      .forEach(id => { const el = svg.getElementById(id); if (el) el.style.willChange = 'transform'; });
+  }
+
+  /* -------------------------------------------------------------
+     WAAPI animation functions (anatomical)
+  ------------------------------------------------------------- */
+
+  function blink(){
+    const up = svg.getElementById('EyelidUpper');
+    const lo = svg.getElementById('EyelidLower');
+    if (!up || !lo) return Promise.resolve();
+    const opts = { duration: 140, easing: 'linear', fill: 'both' };
+    up.animate([{ transform:'scaleY(1)' }, { transform:'scaleY(0.1)' }, { transform:'scaleY(1)' }], opts);
+    return lo.animate([{ transform:'scaleY(1)' }, { transform:'scaleY(0.1)' }, { transform:'scaleY(1)' }], opts).finished;
+  }
+
+  function headBob(){
+    const head = svg.getElementById('Head');
+    if (!head) return Promise.resolve();
+    return head.animate(
+      [{ transform:'translateY(0) rotate(0deg)' },
+       { transform:'translateY(6px) rotate(-2deg)' },
+       { transform:'translateY(0) rotate(0deg)' }],
+      { duration: 900, easing:'cubic-bezier(.3,.6,.3,1)', fill:'both' }
+    ).finished;
+  }
+
+  function preen(){
+    const wing = svg.getElementById('Wing');
+    const tails = ['TailA','TailB','TailC','TailD'].map(id=>svg.getElementById(id)).filter(Boolean);
+    if (!wing) return Promise.resolve();
+    wing.animate(
+      [{ transform:'rotate(0deg)' },
+       { transform:'rotate(-6deg)' },
+       { transform:'rotate(3deg)'  },
+       { transform:'rotate(0deg)' }],
+      { duration: 1600, easing:'ease-in-out', fill:'both' }
+    );
+    tails.forEach((t,i)=>{
+      t.animate(
+        [{ transform:'rotate(0deg)' }, { transform:`rotate(${i%2?2:-2}deg)` }, { transform:'rotate(0deg)' }],
+        { duration: 1200, delay: i*60, easing:'ease-in-out', fill:'both' }
+      );
+    });
+    return Promise.resolve();
+  }
+
+  function hop(){
+    const crow = svg.getElementById('Crow');
+    const feet = [svg.getElementById('FootLeft'), svg.getElementById('FootRight')].filter(Boolean);
+    if (!crow) return Promise.resolve();
+    crow.animate(
+      [{ transform:'translateY(0)' }, { transform:'translateY(-20px)' }, { transform:'translateY(-8px)' }, { transform:'translateY(0)' }],
+      { duration: 900, easing:'cubic-bezier(.3,.6,.3,1)', fill:'both' }
+    );
+    feet.forEach(f => f.animate(
+      [{ transform:'rotate(0deg)' }, { transform:'rotate(8deg)' }, { transform:'rotate(0deg)' }],
+      { duration: 400, easing:'ease-out', fill:'both' }
+    ));
+    dispatch('interact');
+    return Promise.resolve();
+  }
+
+  function caw(){
+    const up = svg.getElementById('BeakUpper');
+    const lo = svg.getElementById('BeakLower');
+    if (!up || !lo) return Promise.resolve();
+    up.animate(
+      [{ transform:'rotate(0)' }, { transform:'rotate(-12deg)' }, { transform:'rotate(0)' }],
+      { duration: 600, easing:'ease-in-out', fill:'both' }
+    );
+    return lo.animate(
+      [{ transform:'rotate(0)' }, { transform:'rotate(14deg)' }, { transform:'rotate(0)' }],
+      { duration: 600, easing:'ease-in-out', fill:'both' }
+    ).finished;
+  }
+
+  /* -------------------------------------------------------------
+     Mount: fetch, underpaint, mask dilation, beak guards, pivots
+  ------------------------------------------------------------- */
   onMount(async () => {
+    const ns = 'http://www.w3.org/2000/svg';
     const text = await fetch(src).then(r => r.text());
     host.innerHTML = text;
     svg = host.querySelector('svg') || host.firstElementChild;
 
-    // Ensure rig IDs and fallback keyframes exist
     ensureIds();
     ensureAnimationStyle();
 
-    // 1) Underpaint: paint full silhouette once under moving parts (hides any slits)
-    const ns = 'http://www.w3.org/2000/svg';
+    // Underpaint full silhouette once under all moving parts (hides any seams)
     const crowRoot = svg.getElementById('Crow');
     const crowPNG  = svg.getElementById('crowPNG');
     const silMask  = svg.getElementById('silMask');
@@ -134,28 +226,28 @@
       const base = document.createElementNS(ns,'g');
       base.setAttribute('id','Underpaint');
       base.setAttribute('mask','url(#silMask)');
-      const use = document.createElementNS(ns,'use');
-      use.setAttribute('href','#crowPNG');
+      const use = document.createElementNS(ns,'use'); use.setAttribute('href','#crowPNG');
       base.appendChild(use);
       crowRoot.parentNode.insertBefore(base, crowRoot);
     }
-    // Optional: hide the carving source if present
+    // Hide the carving source if present
     const body = svg.getElementById('Body');
     if (body) body.setAttribute('display','none');
 
-    // 2) Dilation across masks; extra on beaks to restore lower tip
+    // Dilation across masks; extra on beaks to fully preserve the tip
     ['maskLegL','maskLegR','maskFootL','maskFootR','maskTailA','maskTailB','maskTailC','maskTailD','maskWing','maskNeck','maskHead']
       .forEach(id => dilateMask(id, 1.0));
     ['maskBeakU','maskBeakL'].forEach(id => dilateMask(id, 1.6));
 
-    // 3) Hard clip windows for beaks (protect the very tip)
+    // Generous clip windows for beaks (viewBox-relative)
     const vb = svg.viewBox.baseVal || { x:0,y:0,width: svg.width.baseVal.value, height: svg.height.baseVal.value };
-    const bx0 = vb.width*0.56, by0 = vb.height*0.12, bx1 = vb.width*0.98, by1 = vb.height*0.38;  // upper
-    const lx0 = vb.width*0.56, ly0 = vb.height*0.20, lx1 = vb.width*0.98, ly1 = vb.height*0.48;  // lower
-    clipBeak('BeakUpper', bx0, by0, bx1, by1);
-    clipBeak('BeakLower', lx0, ly0, lx1, ly1);
+    clipBeak('BeakUpper', vb.width*0.56, vb.height*0.12, vb.width*0.98, vb.height*0.38);
+    clipBeak('BeakLower', vb.width*0.56, vb.height*0.20, vb.width*0.98, vb.height*0.48);
 
-    // 4) Ambient micro-behavior (respect reduceMotion)
+    // Set anatomical pivots + perf hints
+    prepareRig();
+
+    // Ambient micro-behavior (respect reduceMotion)
     let idle;
     const onEnter = () => headBob();
     const onClick = () => { hop(); dispatch('interact'); };
@@ -165,10 +257,10 @@
       host.addEventListener('click', onClick);
     }
 
-    // Expose API + host el for ambient scheduler
+    // Expose API + host element for ambient scheduler
     dispatch('ready', { api: { blink, caw, headBob, preen, hop }, el: host });
 
-    // Global caw event → beak animation
+    // Window-level caw => beak animation
     const onCawEvent = () => caw();
     window.addEventListener('corvid-caw', onCawEvent);
 
