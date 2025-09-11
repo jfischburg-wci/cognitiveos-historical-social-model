@@ -48,11 +48,8 @@
     const up = svg.getElementById('EyelidUpper');
     const lo = svg.getElementById('EyelidLower');
     if (up && lo && !svg.getElementById('Eyelids')) {
-      const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-      g.setAttribute('id', 'Eyelids');
-      up.parentNode.insertBefore(g, up);
-      g.appendChild(up);
-      g.appendChild(lo);
+      const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+      g.setAttribute('id','Eyelids'); up.parentNode.insertBefore(g, up); g.appendChild(up); g.appendChild(lo);
     }
   }
 
@@ -62,16 +59,55 @@
   }
 
   onMount(async () => {
-    const text = await fetch(src).then((r) => r.text());
+    const ns = 'http://www.w3.org/2000/svg';
+    const text = await fetch(src).then(r => r.text());
     host.innerHTML = text;
     svg = host.querySelector('svg') || host.firstElementChild;
+
+    // --- 1) FIX THE SEAM: make Body use a pure silhouette mask (no rectangular punch-outs)
+    const maskBody = svg.getElementById('maskBody');
+    const crowSil  = svg.getElementById('crowSil');
+    if (maskBody && crowSil) {
+      while (maskBody.firstChild) maskBody.removeChild(maskBody.firstChild);  // clear subtractive rects
+      const use = document.createElementNS(ns, 'use');
+      use.setAttribute('href', '#crowSil');
+      maskBody.appendChild(use);
+    }
+
+    // --- 2) UNCLIP THE BEAK TIP: pad beak masks a bit to avoid cutting off the tip
+    const padMaskY = (maskId, dy = -2) => {
+      const m = svg.getElementById(maskId);
+      if (!m) return;
+      m.querySelectorAll('rect').forEach(r => {
+        const y = parseFloat(r.getAttribute('y') || '0');
+        r.setAttribute('y', String(Math.max(0, y + dy)));
+      });
+    };
+    padMaskY('maskBeakU', -2);   // names used in v9
+    padMaskY('maskBeakL', -2);
+
+    // Eyelid group convenience for blink
     ensureIds();
+
+    // Micro-overlaps to kill any residual 1px AA seam
     nudgeSeams();
 
-    // Dispatch ready event with API for parent
-    dispatch('ready', { api: { blink, caw, headBob, preen, hop } });
+    // --- 3) MAKE IT ALIVE: idle blink, hover head-bob, click hop+caw
+    let idle = setInterval(() => blink(), 3500 + Math.random()*2500);
+    host.addEventListener('mouseenter', () => headBob());
+    host.addEventListener('click', () => { hop(); dispatch('interact'); });
 
+    // Expose API for App
+    dispatch('ready', { api: { blink, caw, headBob, preen, hop }});
+
+    // Window-level caw → beak animation
+    function onCawEvent(){ caw(); }
     window.addEventListener('corvid-caw', onCawEvent);
+
+    onDestroy(() => {
+      clearInterval(idle);
+      window.removeEventListener('corvid-caw', onCawEvent);
+    });
   });
 
   onDestroy(() => {
