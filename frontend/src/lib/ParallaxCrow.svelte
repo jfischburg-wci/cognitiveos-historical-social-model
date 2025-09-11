@@ -12,12 +12,12 @@
   // Prepare traced SVG group (from potrace) for injection
   let traceGroup = ''
   let traceScale = 1
-  let traceTx = 26, traceTy = 22
+  let traceTx = 20, traceTy = 16
   {
     const vb = /viewBox="([^"]+)"/i.exec(traceRaw)
     const dims = vb ? vb[1].split(/\s+/).map(parseFloat) : [0,0,1024,1024]
     const w = dims[2] || 1024
-    const desired = 300
+    const desired = 330
     traceScale = desired / w
     const grp = traceRaw.match(/<g[\s\S]*?<\/g>/i) || traceRaw.match(/<g[^>]*>[\s\S]*<\/g>/i)
     if (grp && grp[0]) {
@@ -42,10 +42,11 @@
     const next = 4000 + Math.random()*3000
     idleTimer = setTimeout(() => {
       const r = Math.random()
-      if (!effectiveReduced && r < 0.25) { hop(false) }
-      else if (r < 0.45) { doPreen() }
-      else if (r < 0.65) { doPeck() }
-      else if (r < 0.85) { doRuffle() }
+      if (!effectiveReduced && r < 0.22) { hop(false) }
+      else if (r < 0.40) { doPreen() }
+      else if (r < 0.58) { doPeck() }
+      else if (r < 0.78) { doRuffle() }
+      else if (r < 0.92) { doTail() }
       scheduleIdle()
     }, next)
   }
@@ -64,10 +65,12 @@
   let preen = false
   let ruffle = false
   let peck = false
+  let tail = false
 
   function toAlert(v=true){ alert = v }
   function doRuffle(){ ruffle = true; setTimeout(()=> ruffle=false, 420) }
   function doPeck(){ peck = true; setTimeout(()=> peck=false, 220) }
+  function doTail(){ tail = true; setTimeout(()=> tail=false, 300) }
   function doPreen(){ preen = true; setTimeout(()=> preen=false, 700) }
 
   function onMouseMove(e){
@@ -97,6 +100,8 @@
 <section class="stage" aria-label="Parallax crow" bind:this={container} on:mouseenter={onMouseEnter} on:mousemove={onMouseMove} on:mouseleave={onMouseLeave} on:dblclick={onDoubleClick} on:mousedown={onMouseDown} on:mouseup={onMouseUp} on:wheel|passive={onWheel}>
   <div class="layer l1" style="transform: translate3d(0,{depth1}px,0);" aria-hidden="true" />
   <div class="layer l2" style="transform: translate3d(0,{depth2}px,0);" aria-hidden="true" />
+  <!-- Backplate glow for contrast -->
+  <div class="backplate" aria-hidden="true"></div>
   <!-- Shadow under the crow -->
   <div class="shadow {hopping ? 'squash' : ''}" aria-hidden="true"></div>
   <div class="crow {hopping ? 'hop' : 'idle'} {alert ? 'alert' : ''} {preen ? 'preen' : ''} {ruffle ? 'ruffle' : ''} {peck ? 'peck' : ''} look-{look}"
@@ -134,6 +139,8 @@
           <path class="feather f2" d="M96,86 C134,66 170,66 202,84 C186,90 168,102 126,108 Z" fill="#0c141a" />
           <path class="feather f3" d="M98,92 C132,74 166,72 198,88 C182,94 166,106 126,112 Z" fill="#0d151c" />
         </g>
+        <!-- tail (overlay for twitch) -->
+        <path class="tailpath" d="M10,110 C32,100 50,95 70,100 L30,128 Z" fill="#0b0f14" />
         <!-- legs (overlay) -->
         <path d="M140,156 l-8,26" stroke="#0e0e0e" stroke-width="3" />
         <path d="M172,156 l-6,24" stroke="#0e0e0e" stroke-width="3" />
@@ -156,12 +163,13 @@
   .l1{ top: 5%; background: radial-gradient(600px 120px at 20% 50%, rgba(126,247,255,.12), transparent 60%); }
   .l2{ top: 20%; background: radial-gradient(600px 120px at 80% 50%, rgba(165,139,255,.12), transparent 60%); }
   .l3{ top: 35%; background: radial-gradient(800px 140px at 50% 50%, rgba(94,234,212,.12), transparent 60%); }
-  .shadow{ position:absolute; left:50%; transform:translateX(-50%); bottom:12%; width:min(60%,620px); height:22px; background: radial-gradient(50% 50% at 50% 50%, rgba(0,0,0,.5), rgba(0,0,0,0)); filter: blur(8px); opacity:.55 }
+  .shadow{ position:absolute; left:50%; transform:translateX(-50%); bottom:12%; width:min(60%,620px); height:22px; background: radial-gradient(50% 50% at 50% 50%, rgba(0,0,0,.55), rgba(0,0,0,0)); filter: blur(8px); opacity:.6 }
+  .backplate{ position:absolute; left:50%; transform:translateX(-50%); bottom:20%; width:min(80%, 900px); height:38vh; background: radial-gradient(60% 45% at 50% 50%, rgba(126,247,255,.35), rgba(165,139,255,.28) 45%, rgba(14,165,233,.22) 75%, transparent 85%); filter: blur(60px) saturate(130%); opacity:.35; mix-blend-mode: screen; pointer-events:none }
   .crow{ position: relative; margin: 0 auto; width: min(90%, 920px); filter: drop-shadow(0 30px 60px rgba(0,0,0,0.45)); }
   .crow.idle{ animation: bob 6s ease-in-out infinite; }
   .crow.alert{ animation: none; transform-origin: center; animation: alertpose 220ms ease-out forwards }
   .eye{ animation: blink 6s infinite steps(1); transform-origin: center; filter: url(#glow); }
-  .trace *{ fill:#0f151d; stroke:url(#rim); stroke-width:1.2; stroke-opacity:.7 }
+  .trace *{ fill:#121c26; stroke:url(#rim); stroke-width:1.8; stroke-opacity:.9 }
   @keyframes blink{
     0%, 92%, 100% { r: 3.6 }
     94%, 96% { r: 0.8 }
@@ -173,11 +181,18 @@
   .crow.alert .head{ animation: none; transform: rotate(3deg) }
   .crow.preen .head{ animation: none; transform: translate(-24px,12px) rotate(-22deg) }
   .crow.peck .head{ animation: none; transform: translate(10px,12px) rotate(16deg) }
+  .crow.tail .tailpath{ transform-origin: 38px 116px; animation: tailwag 300ms ease-out 1 }
   @keyframes headtilt{
     0%, 90%, 100% { transform: rotate(0deg) }
     40% { transform: rotate(2.2deg) }
     50% { transform: rotate(-1.5deg) }
     60% { transform: rotate(1.2deg) }
+  }
+  @keyframes tailwag{
+    0% { transform: rotate(0deg) }
+    30% { transform: rotate(-6deg) }
+    80% { transform: rotate(2deg) }
+    100% { transform: rotate(0deg) }
   }
   @keyframes alertpose{ from{ transform: translateY(-2px) scale(1.01)} to{ transform: translateY(-2px) scale(1.01)} }
   /* Hop interaction */
@@ -212,7 +227,8 @@
     .stage{ height: 60vh }
     .crow{ width: min(96%, 760px) }
     :root{ --hop-raise: -11px }
-    .trace *{ stroke-width: 1.0; stroke-opacity: .6 }
+    .trace *{ stroke-width: 1.2; stroke-opacity: .75 }
+    .backplate{ opacity:.28; filter: blur(50px) }
   }
   @keyframes wingflick{
     0% { transform: rotate(0deg); transform-origin: 90px 58px }

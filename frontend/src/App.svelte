@@ -146,7 +146,7 @@
     <source src="/crow-caw.mp3" type="audio/mpeg" />
     <source src="/crow-caw.wav" type="audio/wav" />
   </audio>
-  <SettingsPanel bind:muted bind:volume bind:reduceMotion />
+  <SettingsPanel bind:muted bind:volume bind:reduceMotion on:caw={caw} />
 </div>
 
 <style>
