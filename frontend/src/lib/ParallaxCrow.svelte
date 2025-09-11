@@ -19,7 +19,7 @@
   // Prepare traced SVG content (from potrace)
   let traceGroup = ''
   let traceScale = 1
-  let traceTx = 20, traceTy = 16
+  let traceTx = 18, traceTy = -10
   let tracePathD = ''
   let bodyPathD = ''
   let beakUPathD = ''
@@ -32,7 +32,7 @@
     const vb = /viewBox="([^"]+)"/i.exec(traceRaw)
     const dims = vb ? vb[1].split(/\s+/).map(parseFloat) : [0,0,1024,1024]
     const w = dims[2] || 1024
-    const desired = 330
+    const desired = 240
     traceScale = desired / w
     const path = traceRaw.match(/<path[^>]*d=\"([^\"]+)\"/i)
     if (path && path[1]) tracePathD = path[1]
@@ -177,29 +177,20 @@
             <path class="sil" d={tracePathD} />
           {/if}
         </g>
-        <!-- layers clipped to silhouette -->
-        <g clip-path="url(#crowClip)">
+        <!-- layers clipped to silhouette; transform to traced coordinate space -->
+        <g clip-path="url(#crowClip)" transform="translate({traceTx},{traceTy}) scale({traceScale})">
           <!-- wing group with layered feathers for shake/flick -->
           <g class="wing">
-            {#if wf1PathD}<path class="feather f1" d={wf1PathD} fill="#0c1218" />{:else}<path class="feather f1" d="M96,78 C132,60 170,58 206,78 C188,84 168,98 126,104 Z" fill="#0c1218" />{/if}
-            {#if wf2PathD}<path class="feather f2" d={wf2PathD} fill="#0c141a" />{:else}<path class="feather f2" d="M96,86 C134,66 170,66 202,84 C186,90 168,102 126,108 Z" fill="#0c141a" />{/if}
-            {#if wf3PathD}<path class="feather f3" d={wf3PathD} fill="#0d151c" />{:else}<path class="feather f3" d="M98,92 C132,74 166,72 198,88 C182,94 166,106 126,112 Z" fill="#0d151c" />{/if}
+            {#if wf1PathD}<path class="feather f1" d={wf1PathD} fill="#0c1218" />{/if}
+            {#if wf2PathD}<path class="feather f2" d={wf2PathD} fill="#0c141a" />{/if}
+            {#if wf3PathD}<path class="feather f3" d={wf3PathD} fill="#0d151c" />{/if}
           </g>
           <!-- articulating beak (split upper/lower) -->
           <g class="beak-upper">{#if beakUPathD}<path d={beakUPathD} fill="#12171d" />{/if}</g>
           <g class="beak-lower">{#if beakLPathD}<path d={beakLPathD} fill="#0d1319" />{/if}</g>
           <!-- tail (overlay for twitch) -->
-          {#if tailPathD}<path class="tailpath" d={tailPathD} fill="#0b0f14" />{:else}<path class="tailpath" d="M10,110 C32,100 50,95 70,100 L30,128 Z" fill="#0b0f14" />{/if}
-          <!-- legs (overlay) -->
-          <path d="M140,156 l-8,26" stroke="#0e0e0e" stroke-width="3" />
-          <path d="M172,156 l-6,24" stroke="#0e0e0e" stroke-width="3" />
-        <!-- head group with eye (overlay) -->
-        <g class="head">
-          <circle cx="232" cy="64" r="22" fill="#0a0d12" />
-          <circle class="eye" cx="238" cy="60" r="4" fill="#e6f6ff" />
-        </g>
-        <!-- beak -->
-        <polygon points="250,62 312,50 248,78" fill="#0e1216" />
+          {#if tailPathD}<path class="tailpath" d={tailPathD} fill="#0b0f14" />{/if}
+          <!-- Minimal legs and eye approximations (outside trace parts) are omitted to avoid misalignment -->
         </g>
       </g>
     </svg>
@@ -268,9 +259,8 @@
   .crow.hop .wing{ animation: wingflick 320ms ease-out 1 }
   .crow.ruffle .wing{ animation: feathershake 420ms ease-out 1 }
   .crow.preen .wing{ transform-origin: 130px 90px; transform: rotate(-6deg) }
-  /* Beak articulation */
-  .beak-upper{ transform-origin: 236px 60px }
-  .beak-lower{ transform-origin: 238px 64px }
+  /* Beak articulation (in traced coordinate space) */
+  .beak-upper, .beak-lower{ transform-box: fill-box; transform-origin: 50% 50% }
   .crow.caw .beak-upper, .crow.hop .beak-upper{ animation: beakup 240ms ease-out 1 }
   .crow.caw .beak-lower, .crow.hop .beak-lower{ animation: beaklo 240ms ease-out 1 }
   @keyframes beakup{ 0%{ transform: rotate(0) } 40%{ transform: rotate(-12deg) } 100%{ transform: rotate(0) } }
