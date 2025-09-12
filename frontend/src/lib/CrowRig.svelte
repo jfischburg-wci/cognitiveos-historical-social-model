@@ -119,6 +119,9 @@
     const vb = svg.viewBox.baseVal || { x:0, y:0, width: svg.width.baseVal.value, height: svg.height.baseVal.value };
     const HEAD = { x: vb.width*0.50, y: vb.height*0.20 };
     const WING = { x: vb.width*0.33, y: vb.height*0.36 };
+    const WINGA= { x: WING.x,         y: WING.y };
+    const WINGB= { x: vb.width*0.40, y: vb.height*0.38 };
+    const WINGC= { x: vb.width*0.48, y: vb.height*0.41 };
     const BU   = { x: vb.width*0.60, y: vb.height*0.23 };
     const BL   = { x: vb.width*0.61, y: vb.height*0.26 };
     const TAIL = { x: vb.width*0.19, y: vb.height*0.62 };
@@ -126,7 +129,10 @@
     const RFOOT= { x: vb.width*0.49, y: vb.height*0.82 };
 
     setOrigin('Head', HEAD.x, HEAD.y);
-    setOrigin('Wing', WING.x, WING.y);
+    setOrigin('Wing',  WING.x,  WING.y);
+    setOrigin('WingA', WINGA.x, WINGA.y);
+    setOrigin('WingB', WINGB.x, WINGB.y);
+    setOrigin('WingC', WINGC.x, WINGC.y);
     setOrigin('BeakUpper', BU.x, BU.y);
     setOrigin('BeakLower', BL.x, BL.y);
     ['TailA','TailB','TailC','TailD'].forEach(id => setOrigin(id, TAIL.x, TAIL.y));
@@ -134,7 +140,7 @@
     setOrigin('FootRight', RFOOT.x, RFOOT.y);
 
     // Hint to engines that these nodes will animate transforms
-    ['Crow','Head','Wing','BeakUpper','BeakLower','TailA','TailB','TailC','TailD','Legs','Feet','FootLeft','FootRight']
+    ['Crow','Head','Wing','WingA','WingB','WingC','BeakUpper','BeakLower','TailA','TailB','TailC','TailD','Legs','Feet','FootLeft','FootRight']
       .forEach(id => { const el = svg.getElementById(id); if (el) el.style.willChange = 'transform'; });
   }
 
@@ -164,6 +170,7 @@
 
   function preen(){
     const wing = svg.getElementById('Wing');
+    const wingC = svg.getElementById('WingC');
     const tails = ['TailA','TailB','TailC','TailD'].map(id=>svg.getElementById(id)).filter(Boolean);
     if (!wing) return Promise.resolve();
     wing.animate(
@@ -173,6 +180,13 @@
        { transform:'rotate(0deg)' }],
       { duration: 1600, easing:'ease-in-out', fill:'both' }
     );
+    // Subtle delayed tip follow-through
+    if (wingC) {
+      wingC.animate(
+        [{ transform:'rotate(0deg)' }, { transform:'rotate(-2deg)' }, { transform:'rotate(1deg)' }, { transform:'rotate(0deg)' }],
+        { duration: 1600, delay: 120, easing:'ease-in-out', fill:'both' }
+      );
+    }
     tails.forEach((t,i)=>{
       t.animate(
         [{ transform:'rotate(0deg)' }, { transform:`rotate(${i%2?2:-2}deg)` }, { transform:'rotate(0deg)' }],
@@ -260,6 +274,9 @@
 
     ensureIds();
     ensureAnimationStyle();
+    // Presence flags for fallback CSS selectors (set on host wrapper)
+    if (svg.getElementById('Head')) host.classList.add('has-head');
+    if (svg.getElementById('Wing')) host.classList.add('has-wing');
 
     // Underpaint full silhouette once under all moving parts (hides any seams)
     const crowRoot = svg.getElementById('Crow');
@@ -278,9 +295,9 @@
     if (body) body.setAttribute('display','none');
 
     // Dilation across masks; extra on beaks to fully preserve the tip
-    ['maskLegL','maskLegR','maskFootL','maskFootR','maskTailA','maskTailB','maskTailC','maskTailD','maskWing','maskNeck','maskHead']
+    ['maskLegL','maskLegR','maskFootL','maskFootR','maskTailA','maskTailB','maskTailC','maskTailD','maskWing','maskWingA','maskWingB','maskWingC','maskNeck','maskHead']
       .forEach(id => dilateMask(id, 1.0));
-    ['maskBeakU','maskBeakL'].forEach(id => dilateMask(id, 1.6));
+    ['maskBeakUpper','maskBeakLower'].forEach(id => dilateMask(id, 1.6));
 
     // Generous clip windows for beaks (viewBox-relative)
     const vb = svg.viewBox.baseVal || { x:0,y:0,width: svg.width.baseVal.value, height: svg.height.baseVal.value };

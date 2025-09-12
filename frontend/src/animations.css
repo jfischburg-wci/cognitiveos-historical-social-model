@@ -10,6 +10,7 @@
 @keyframes beakLower { 0%,100%{transform:rotate(0)} 30%{transform:rotate(14deg)} }
 @keyframes walk { 0%{transform:translateX(0)} 25%{transform:translateX(8px)} 50%{transform:translateX(16px)} 75%{transform:translateX(24px)} 100%{transform:translateX(32px)} }
 @keyframes walkHeadBob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(4px)} }
+@keyframes preenSecondary { 0%,100%{transform:rotate(0)} 40%{transform:rotate(-2deg)} 60%{transform:rotate(1deg)} }
 
 /* Pivots via CSS vars so you can nudge without editing CSS */
 .crow{ --head-origin:50% 20%; --wing-origin:33% 36%; --beakU-origin:60% 23%; --beakL-origin:61% 26%; }
@@ -17,6 +18,7 @@
 /* ---------- Looping cycles (toggle on/off) ---------- */
 .crow.loop-headBob  #Head      { transform-origin: var(--head-origin); animation: headBob 1.2s ease-in-out infinite; }
 .crow.loop-preen    #Wing      { transform-origin: var(--wing-origin); animation: preen 2.4s ease-in-out infinite; }
+.crow.loop-preen    #WingC     { animation: preenSecondary 2.4s ease-in-out infinite; animation-delay: .12s; }
 .crow.loop-hop      #Crow      { animation: hop .9s cubic-bezier(.3,.6,.3,1) infinite; }
 .crow.loop-walk     #Crow      { animation: walk .6s steps(2,end) infinite; }
 .crow.loop-walk     #Head      { animation: walkHeadBob .3s ease-in-out infinite; }
