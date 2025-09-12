@@ -38,12 +38,18 @@
       @keyframes hop {0%,100%{transform:translateY(0)}30%{transform:translateY(-20px)}60%{transform:translateY(-8px)}}
       @keyframes beakOpen {0%,100%{transform:rotate(0)}30%{transform:rotate(-12deg)}}
       @keyframes beakLower {0%,100%{transform:rotate(0)}30%{transform:rotate(14deg)}}
+      /* walking fallback */
+      @keyframes walk { 0%{transform:translateX(0)} 25%{transform:translateX(8px)} 50%{transform:translateX(16px)} 75%{transform:translateX(24px)} 100%{transform:translateX(32px)} }
+      @keyframes walkHeadBob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(4px)} }
       .animate-headBob #Head{animation:headBob 1.2s ease-in-out 1}
       .animate-blink #EyelidUpper,.animate-blink #EyelidLower{transform-origin:50% 50%;animation:blink .24s 1}
       .animate-preen #Wing{transform-origin:33% 36%;animation:preen 2.4s ease-in-out 1}
       .animate-hop #Crow{animation:hop .9s cubic-bezier(.3,.6,.3,1) 1}
       .animate-caw #BeakUpper{transform-origin:60% 23%;animation:beakOpen .6s 1}
       .animate-caw #BeakLower{transform-origin:61% 26%;animation:beakLower .6s 1}
+      .animate-walk #Crow{animation:walk .6s steps(2,end) 1}
+      .loop-walk #Crow{animation:walk .6s steps(2,end) infinite}
+      .loop-walk #Head{animation:walkHeadBob .3s ease-in-out infinite}
     `;
     const style = document.createElementNS('http://www.w3.org/2000/svg','style');
     style.textContent = css;
@@ -206,6 +212,43 @@
     ).finished;
   }
 
+  function walk(){
+    const crow = svg.getElementById('Crow');
+    const head = svg.getElementById('Head');
+    if (!crow || !head) return Promise.resolve();
+    crow.animate(
+      [
+        { transform: 'translateX(0px)' },
+        { transform: 'translateX(32px)' }
+      ],
+      { duration: 600, easing: 'steps(2,end)', fill: 'both' }
+    );
+    head.animate(
+      [
+        { transform: 'translateY(0px)' },
+        { transform: 'translateY(4px)' },
+        { transform: 'translateY(0px)' }
+      ],
+      { duration: 300, iterations: 2, easing: 'ease-in-out' }
+    );
+    dispatch('interact');
+    return Promise.resolve();
+  }
+
+  /* -------------------------------------------------------------
+     CSS loop helpers (class toggles on host)
+  ------------------------------------------------------------- */
+  const startLoop = (cls) => { if (host) host.classList.add(cls); };
+  const stopLoop  = (cls) => { if (host) host.classList.remove(cls); };
+  const headBobStart = () => startLoop('loop-headBob');
+  const headBobStop  = () => stopLoop('loop-headBob');
+  const preenStart   = () => startLoop('loop-preen');
+  const preenStop    = () => stopLoop('loop-preen');
+  const hopStart     = () => startLoop('loop-hop');
+  const hopStop      = () => stopLoop('loop-hop');
+  const walkStart    = () => startLoop('loop-walk');
+  const walkStop     = () => stopLoop('loop-walk');
+
   /* -------------------------------------------------------------
      Mount: fetch, underpaint, mask dilation, beak guards, pivots
   ------------------------------------------------------------- */
@@ -258,7 +301,7 @@
     }
 
     // Expose API + host element for ambient scheduler
-    dispatch('ready', { api: { blink, caw, headBob, preen, hop }, el: host });
+    dispatch('ready', { api: { blink, caw, headBob, preen, hop, walk, headBobStart, headBobStop, preenStart, preenStop, hopStart, hopStop, walkStart, walkStop }, el: host });
 
     // Window-level caw => beak animation
     const onCawEvent = () => caw();

@@ -19,6 +19,7 @@ export function startAmbient({ rig, el, caw, reduceMotion = false }) {
     { name: 'preen',   run: () => rig.preen(),                   weight: 2, cool: 2500 },
     { name: 'caw',     run: async () => { await rig.caw(); await caw?.(); }, weight: 2, cool: 1200 },
     { name: 'hop',     run: () => hopAcrossAndBack(el, rig),     weight: 2, cool: 2000 },
+    { name: 'walk',    run: () => rig.walk(),                    weight: 1, cool: 3000 },
   ];
 
   // Hop across and back: multiple hops with bounded drift & direction flips

@@ -8,6 +8,8 @@
 @keyframes hop { 0%,100%{transform:translateY(0)} 30%{transform:translateY(-20px)} 60%{transform:translateY(-8px)} }
 @keyframes beakOpen { 0%,100%{transform:rotate(0)} 30%{transform:rotate(-12deg)} }
 @keyframes beakLower { 0%,100%{transform:rotate(0)} 30%{transform:rotate(14deg)} }
+@keyframes walk { 0%{transform:translateX(0)} 25%{transform:translateX(8px)} 50%{transform:translateX(16px)} 75%{transform:translateX(24px)} 100%{transform:translateX(32px)} }
+@keyframes walkHeadBob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(4px)} }
 
 /* Pivots via CSS vars so you can nudge without editing CSS */
 .crow{ --head-origin:50% 20%; --wing-origin:33% 36%; --beakU-origin:60% 23%; --beakL-origin:61% 26%; }
@@ -16,6 +18,8 @@
 .crow.loop-headBob  #Head      { transform-origin: var(--head-origin); animation: headBob 1.2s ease-in-out infinite; }
 .crow.loop-preen    #Wing      { transform-origin: var(--wing-origin); animation: preen 2.4s ease-in-out infinite; }
 .crow.loop-hop      #Crow      { animation: hop .9s cubic-bezier(.3,.6,.3,1) infinite; }
+.crow.loop-walk     #Crow      { animation: walk .6s steps(2,end) infinite; }
+.crow.loop-walk     #Head      { animation: walkHeadBob .3s ease-in-out infinite; }
 
 /* ---------- One-shot cycles (auto-removed by JS) ---------- */
 .crow.play-blink    #EyelidUpper,

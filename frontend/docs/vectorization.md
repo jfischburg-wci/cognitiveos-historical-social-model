@@ -43,6 +43,5 @@ Integration Notes
 - Aim for smooth anchor curves and minimal point count — it animates better.
 
 Testing
-- Run `cd frontend && npm install && npm run dev` and open http://localhost:5173
+- Run `cd frontend && bun install && bun run dev` and open http://localhost:5173
 - Verify proportions align with the header logo. Tweak `viewBox` or group `transform` as needed.
-

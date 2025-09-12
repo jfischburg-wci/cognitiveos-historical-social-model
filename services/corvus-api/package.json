@@ -1,0 +1,21 @@
+{
+  "name": "corvus-api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Lightweight API to validate and broadcast Corvid directives over WebSocket.",
+  "scripts": {
+    "dev": "node src/server.js",
+    "build": "mkdir -p dist && cp -R src/* dist/",
+    "start": "node dist/server.js"
+  },
+  "dependencies": {
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "helmet": "^7.0.0",
+    "ws": "^8.18.0"
+  }
+}
+

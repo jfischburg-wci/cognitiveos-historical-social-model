@@ -19,9 +19,12 @@ export function createCrowRig(rootEl, audioEl) {
     headBobStart: () => startLoop('loop-headBob'),
     preenStart:   () => startLoop('loop-preen'),
     hopStart:     () => startLoop('loop-hop'),
+    // walking loop helpers
+    walkStart:    () => startLoop('loop-walk'),
     headBobStop:  () => stopLoop('loop-headBob'),
     preenStop:    () => stopLoop('loop-preen'),
     hopStop:      () => stopLoop('loop-hop'),
+    walkStop:     () => stopLoop('loop-walk'),
     stopAll
   };
 }

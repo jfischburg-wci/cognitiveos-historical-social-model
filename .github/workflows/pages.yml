@@ -20,15 +20,15 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
         with:
-          node-version: 20
+          bun-version: latest
       - name: Install dependencies
-        run: npm ci || npm install
+        run: bun install
         working-directory: frontend
       - name: Build
-        run: npm run build
+        run: bun run build
         working-directory: frontend
       - name: Add CNAME
         run: echo "corvid.contentguru.ai" > dist/CNAME
@@ -48,4 +48,3 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-

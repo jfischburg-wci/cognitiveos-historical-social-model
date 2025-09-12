@@ -14,6 +14,8 @@
   let rig;               // API from CrowRig (blink, caw, headBob, preen, hop)
   let crowEl;            // DOM element CrowRig renders into (for hop drift)
   let ambientHandle;     // controller returned by startAmbient()
+  let ws;                // WebSocket for backend events
+  let reconnectTimer;
 
   // --- caw with file-first playback and synth fallback ---
   async function caw() {
@@ -83,6 +85,7 @@
     crowEl = e.detail.el;
     ambientHandle?.stop?.();
     ambientHandle = startAmbient({ rig, el: crowEl, caw, reduceMotion });
+    connectEvents();
   }
 
   // Recreate ambient loop if reduceMotion toggles at runtime
@@ -92,6 +95,72 @@
   }
 
   onDestroy(() => ambientHandle?.stop?.());
+
+  // ---- Backend events wiring (optional; used when backend is running) ----
+  function getEventsUrl() {
+    const envUrl = import.meta?.env?.VITE_CORVUS_WS_URL;
+    if (envUrl) return envUrl;
+    try {
+      const { protocol, hostname } = window.location;
+      const wsProto = protocol === 'https:' ? 'wss' : 'ws';
+      const isLocal = hostname === 'localhost' || hostname === '127.0.0.1';
+      if (isLocal) return `${wsProto}://localhost:8080/v1/events`;
+      return `${wsProto}://${window.location.host}/v1/events`;
+    } catch {
+      return 'ws://localhost:8080/v1/events';
+    }
+  }
+
+  function scheduleReconnect() {
+    if (reconnectTimer) return;
+    reconnectTimer = setTimeout(() => {
+      reconnectTimer = null;
+      if (rig) connectEvents();
+    }, 1500);
+  }
+
+  function connectEvents() {
+    try { ws?.close?.(); } catch {}
+    const url = getEventsUrl();
+    try {
+      ws = new WebSocket(url);
+    } catch {
+      scheduleReconnect();
+      return;
+    }
+    ws.onopen = () => {};
+    ws.onmessage = (ev) => {
+      try {
+        const data = JSON.parse(ev.data);
+        if (data?.type === 'directives') applyDirectives(data.payload);
+      } catch {}
+    };
+    ws.onclose = () => scheduleReconnect();
+    ws.onerror = () => { try { ws.close(); } catch {}; };
+  }
+
+  function applyDirectives(payload) {
+    if (!payload || payload.version !== '1.0' || !Array.isArray(payload.directives)) return;
+    (async () => {
+      for (const a of payload.directives) {
+        const t = a?.type;
+        if (!t) continue;
+        const isMotion = t === 'hop' || t === 'preen' || t === 'headBob' || t === 'walk';
+        if (reduceMotion && isMotion) continue;
+
+        const loop = a?.loop === true;
+        const start = rig?.[t + 'Start'];
+        const stop  = rig?.[t + 'Stop'];
+
+        if (loop && typeof start === 'function') { start(); continue; }
+        if (!loop && typeof stop === 'function') { stop(); continue; }
+
+        if (t === 'blink') { await rig?.blink?.(); continue; }
+        if (t === 'caw')   { await caw(); continue; }
+        if (typeof rig?.[t] === 'function') { await rig[t](); continue; }
+      }
+    })().catch(() => {});
+  }
 
   // LLM-driven reactions
   async function reactTo(eventName, payload = {}) {
@@ -103,6 +172,7 @@
       if (action.type === 'hop'    && !reduceMotion) await rig.hop();
       if (action.type === 'preen'  && !reduceMotion) await rig.preen();
       if (action.type === 'headBob'&& !reduceMotion) await rig.headBob();
+      if (action.type === 'walk'   && !reduceMotion) await rig.walk();
     }
   }
 
@@ -141,6 +211,7 @@
 
     <section class="cta">
       <button class="caw" on:click={caw} aria-label="Caw">Caw</button>
+      <button class="caw" on:click={() => rig?.walk?.()} aria-label="Walk">Walk</button>
     </section>
 
     <section class="coming">

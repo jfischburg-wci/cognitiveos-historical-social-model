@@ -1,0 +1,35 @@
+services:
+  api:
+    build:
+      context: ./backend
+      target: dev
+      args:
+        - PYTHON_VERSION=3.11-slim
+    working_dir: /app
+    volumes:
+      - ./backend:/app
+    ports:
+      - "8000:8000"
+
+  ui:
+    build:
+      context: ./frontend
+      target: dev
+      args:
+        - BUN_VERSION=1.2.18
+    # Mount only source files for live reload; keep dependencies in image
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+      - ./frontend/index.html:/app/index.html
+      - ./frontend/vite.config.js:/app/vite.config.js
+    environment:
+      - VITE_API_URL=http://localhost:8000
+    ports:
+      - "5173:5173"
+    depends_on:
+      - api
+
+networks:
+  default:
+    name: corvid
