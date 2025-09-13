@@ -211,6 +211,10 @@
 
     <section class="cta">
       <button class="caw" on:click={caw} aria-label="Caw">Caw</button>
+      <button class="caw" on:click={() => rig?.blink?.()} aria-label="Blink">Blink</button>
+      <button class="caw" on:click={() => rig?.headBob?.()} aria-label="Head Bob">Head Bob</button>
+      <button class="caw" on:click={() => rig?.preen?.()} aria-label="Preen">Preen</button>
+      <button class="caw" on:click={() => rig?.hop?.()} aria-label="Hop">Hop</button>
       <button class="caw" on:click={() => rig?.walk?.()} aria-label="Walk">Walk</button>
     </section>
 
