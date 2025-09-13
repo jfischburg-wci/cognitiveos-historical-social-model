@@ -163,10 +163,40 @@
     const up = svg.getElementById('EyelidUpper');
     const lo = svg.getElementById('EyelidLower');
     if (!up || !lo) return Promise.resolve();
-    const opts = { duration: 140, easing: 'linear', fill: 'none' };
-    up.animate([{ transform:'scaleY(1)' }, { transform:'scaleY(0.1)' }, { transform:'scaleY(1)' }], opts);
-    const a = lo.animate([{ transform:'scaleY(1)' }, { transform:'scaleY(0.1)' }, { transform:'scaleY(1)' }], opts);
-    return a.finished;
+
+    // Ensure eyelids only: set transform origins and make visible during blink
+    up.style.transformBox = 'fill-box';
+    lo.style.transformBox = 'fill-box';
+    up.style.transformOrigin = '50% 100%'; // center-bottom
+    lo.style.transformOrigin = '50% 0%';   // center-top
+    up.style.opacity = '1';
+    lo.style.opacity = '1';
+
+    const kf = [
+      { transform: 'scaleY(0)' },
+      { transform: 'scaleY(1)' },
+      { transform: 'scaleY(0)' }
+    ];
+
+    const quick = 140;
+    const slow  = 220;
+
+    const aU1 = track(up.animate(kf, { duration: quick, easing: 'ease-in-out', fill: 'none' }));
+    const aL1 = track(lo.animate(kf, { duration: quick, easing: 'ease-in-out', fill: 'none' }));
+
+    const maybeSecond = Math.random() < 0.35;
+
+    return Promise.all([aU1.finished, aL1.finished]).then(async () => {
+      if (maybeSecond) {
+        await new Promise(r => setTimeout(r, 60));
+        const aU2 = track(up.animate(kf, { duration: slow, easing: 'ease-in-out', fill: 'none' }));
+        const aL2 = track(lo.animate(kf, { duration: slow, easing: 'ease-in-out', fill: 'none' }));
+        await Promise.all([aU2.finished, aL2.finished]);
+      }
+      // Hide eyelids again (neutral)
+      up.style.opacity = '0';
+      lo.style.opacity = '0';
+    });
   }
 
   function headBob(){
