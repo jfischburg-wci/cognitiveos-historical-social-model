@@ -133,6 +133,7 @@
     const WINGA= { x: WING.x,         y: WING.y };
     const WINGB= { x: vb.width*0.40, y: vb.height*0.38 };
     const WINGC= { x: vb.width*0.48, y: vb.height*0.41 };
+    const NECKM= { x: vb.width*0.44, y: vb.height*0.26 };
     const BU   = { x: vb.width*0.60, y: vb.height*0.23 };
     const BL   = { x: vb.width*0.61, y: vb.height*0.26 };
     const TAIL = { x: vb.width*0.19, y: vb.height*0.62 };
@@ -144,6 +145,7 @@
     setOrigin('WingA', WINGA.x, WINGA.y);
     setOrigin('WingB', WINGB.x, WINGB.y);
     setOrigin('WingC', WINGC.x, WINGC.y);
+    setOrigin('NeckMid', NECKM.x, NECKM.y);
     setOrigin('BeakUpper', BU.x, BU.y);
     setOrigin('BeakLower', BL.x, BL.y);
     ['TailA','TailB','TailC','TailD'].forEach(id => setOrigin(id, TAIL.x, TAIL.y));
@@ -151,7 +153,7 @@
     setOrigin('FootRight', RFOOT.x, RFOOT.y);
 
     // Hint to engines that these nodes will animate transforms
-    ['Crow','Head','Wing','WingA','WingB','WingC','BeakUpper','BeakLower','TailA','TailB','TailC','TailD','Legs','Feet','FootLeft','FootRight']
+    ['Crow','Head','NeckMid','Wing','WingA','WingB','WingC','BeakUpper','BeakLower','TailA','TailB','TailC','TailD','Legs','Feet','FootLeft','FootRight']
       .forEach(id => { const el = svg.getElementById(id); if (el) el.style.willChange = 'transform'; });
   }
 
@@ -202,13 +204,19 @@
 
   function headBob(){
     const head = svg.getElementById('Head');
+    const neckm = svg.getElementById('NeckMid');
     if (!head) return Promise.resolve();
-    return head.animate(
+    const aH = head.animate(
       [{ transform:'translateY(0) rotate(0deg)' },
        { transform:'translateY(6px) rotate(-2deg)' },
        { transform:'translateY(0) rotate(0deg)' }],
       { duration: 900, easing:'cubic-bezier(.3,.6,.3,1)', fill:'none' }
-    ).finished;
+    );
+    const aN = neckm ? neckm.animate(
+      [{ transform:'rotate(0deg)' }, { transform:'rotate(-1deg)' }, { transform:'rotate(0deg)' }],
+      { duration: 900, easing:'cubic-bezier(.3,.6,.3,1)', fill:'none' }
+    ) : null;
+    return Promise.all([aH.finished, aN?.finished ?? Promise.resolve()]).then(()=>{});
   }
 
   function preen(){
