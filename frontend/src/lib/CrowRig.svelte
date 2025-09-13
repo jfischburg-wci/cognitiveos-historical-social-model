@@ -166,39 +166,52 @@
     const lo = svg.getElementById('EyelidLower');
     if (!up || !lo) return Promise.resolve();
 
-    // Ensure eyelids only: set transform origins and make visible during blink
+    // Ensure eyelids only: in-head, clipped, and animated via translate toward center
     up.style.transformBox = 'fill-box';
     lo.style.transformBox = 'fill-box';
-    up.style.transformOrigin = '50% 100%'; // center-bottom
-    lo.style.transformOrigin = '50% 0%';   // center-top
+    // Don't rely on scale; slide lids toward the eye line and slightly overlap to avoid a sliver
     up.style.opacity = '1';
     lo.style.opacity = '1';
 
-    const kf = [
-      { transform: 'scaleY(0)' },
-      { transform: 'scaleY(1)' },
-      { transform: 'scaleY(0)' }
+    // Distances tuned to the SVG geometry (each rect is 28px tall, stacked to meet at y=150)
+    const d = 14;       // half-lid travel toward the center line
+    const overlap = 1;  // 1px overlap at closure to avoid anti-aliased gap
+
+    const kfU = [
+      { transform: `translateY(${-d}px)` },
+      { transform: `translateY(${overlap}px)` },
+      { transform: `translateY(${-d}px)` }
+    ];
+    const kfL = [
+      { transform: `translateY(${d}px)` },
+      { transform: `translateY(${-overlap}px)` },
+      { transform: `translateY(${d}px)` }
     ];
 
-    const quick = 140;
-    const slow  = 220;
+    // Fast close, slight hold, natural open
+    const quick = 160; // ms (one-blink)
+    const slow  = 230; // ms (double-blink second pass)
+    const ease  = 'cubic-bezier(.4,.0,.2,1)'; // standard material-ish ease
 
-    const aU1 = track(up.animate(kf, { duration: quick, easing: 'ease-in-out', fill: 'none' }));
-    const aL1 = track(lo.animate(kf, { duration: quick, easing: 'ease-in-out', fill: 'none' }));
+    const aU1 = track(up.animate(kfU, { duration: quick, easing: ease, fill: 'none' }));
+    const aL1 = track(lo.animate(kfL, { duration: quick, easing: ease, fill: 'none' }));
 
-    // Occasional double-blink, tuned for corvid-like behavior (~18%)
+    // Occasional double-blink (~18%) with a short pause
     const maybeSecond = Math.random() < 0.18;
 
     return Promise.all([aU1.finished, aL1.finished]).then(async () => {
       if (maybeSecond) {
-        await new Promise(r => setTimeout(r, 60));
-        const aU2 = track(up.animate(kf, { duration: slow, easing: 'ease-in-out', fill: 'none' }));
-        const aL2 = track(lo.animate(kf, { duration: slow, easing: 'ease-in-out', fill: 'none' }));
+        await new Promise(r => setTimeout(r, 70));
+        const aU2 = track(up.animate(kfU, { duration: slow, easing: ease, fill: 'none' }));
+        const aL2 = track(lo.animate(kfL, { duration: slow, easing: ease, fill: 'none' }));
         await Promise.all([aU2.finished, aL2.finished]);
       }
       // Hide eyelids again (neutral)
       up.style.opacity = '0';
       lo.style.opacity = '0';
+      // Clear any residual transform to ensure clean neutral state
+      up.style.transform = '';
+      lo.style.transform = '';
     });
   }
 
