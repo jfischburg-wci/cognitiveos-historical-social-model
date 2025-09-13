@@ -10,6 +10,13 @@ export function createCrowRig(rootEl, audioEl) {
   const stopLoop  = cls => { rootEl.classList.remove(cls); loops.delete(cls); };
   const stopAll   = () => [...loops].forEach(stopLoop);
 
+  const clearPlays = () => {
+    rootEl.className.split(/\s+/).forEach(c => { if (c.startsWith('play-') || c.startsWith('animate-')) rootEl.classList.remove(c); });
+  };
+
+  async function cancel(){ stopAll(); clearPlays(); }
+  async function reset(){ await cancel(); }
+
   return {
     // one-shots
     blink: () => runOnce('play-blink', 240),
@@ -25,6 +32,8 @@ export function createCrowRig(rootEl, audioEl) {
     preenStop:    () => stopLoop('loop-preen'),
     hopStop:      () => stopLoop('loop-hop'),
     walkStop:     () => stopLoop('loop-walk'),
-    stopAll
+    stopAll,
+    cancel,
+    reset
   };
 }

@@ -96,6 +96,22 @@
 
   onDestroy(() => ambientHandle?.stop?.());
 
+  // Unified action runner with cancel/reset to ensure neutral state
+  async function run(action) {
+    if (!rig) return;
+    try {
+      await rig.cancel?.();
+      await rig.reset?.();
+      if (action === 'caw') {
+        await caw();
+      } else if (typeof rig[action] === 'function') {
+        await rig[action]();
+      }
+    } finally {
+      await rig.reset?.();
+    }
+  }
+
   // ---- Backend events wiring (optional; used when backend is running) ----
   function getEventsUrl() {
     const envUrl = import.meta?.env?.VITE_CORVUS_WS_URL;
@@ -210,12 +226,12 @@
     <CrowRig reduceMotion={reduceMotion} on:ready={onCrowReady} on:interact={caw} />
 
     <section class="cta">
-      <button class="caw" on:click={caw} aria-label="Caw">Caw</button>
-      <button class="caw" on:click={() => rig?.blink?.()} aria-label="Blink">Blink</button>
-      <button class="caw" on:click={() => rig?.headBob?.()} aria-label="Head Bob">Head Bob</button>
-      <button class="caw" on:click={() => rig?.preen?.()} aria-label="Preen">Preen</button>
-      <button class="caw" on:click={() => rig?.hop?.()} aria-label="Hop">Hop</button>
-      <button class="caw" on:click={() => rig?.walk?.()} aria-label="Walk">Walk</button>
+      <button class="caw" on:click={() => run('caw')} aria-label="Caw">Caw</button>
+      <button class="caw" on:click={() => run('blink')} aria-label="Blink">Blink</button>
+      <button class="caw" on:click={() => run('headBob')} aria-label="Head Bob">Head Bob</button>
+      <button class="caw" on:click={() => run('preen')} aria-label="Preen">Preen</button>
+      <button class="caw" on:click={() => run('hop')} aria-label="Hop">Hop</button>
+      <button class="caw" on:click={() => run('walk')} aria-label="Walk">Walk</button>
     </section>
 
     <section class="coming">

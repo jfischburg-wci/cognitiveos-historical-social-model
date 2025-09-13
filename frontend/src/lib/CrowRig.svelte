@@ -8,6 +8,17 @@
   // State
   const dispatch = createEventDispatcher();
   let host, svg;
+  const activeAnims = new Set();
+
+  function track(anim){
+    if (!anim) return anim;
+    try {
+      activeAnims.add(anim);
+      anim.onfinish = () => activeAnims.delete(anim);
+      anim.oncancel = () => activeAnims.delete(anim);
+    } catch {}
+    return anim;
+  }
 
   /* -------------------------------------------------------------
      Utilities
@@ -152,9 +163,10 @@
     const up = svg.getElementById('EyelidUpper');
     const lo = svg.getElementById('EyelidLower');
     if (!up || !lo) return Promise.resolve();
-    const opts = { duration: 140, easing: 'linear', fill: 'both' };
+    const opts = { duration: 140, easing: 'linear', fill: 'none' };
     up.animate([{ transform:'scaleY(1)' }, { transform:'scaleY(0.1)' }, { transform:'scaleY(1)' }], opts);
-    return lo.animate([{ transform:'scaleY(1)' }, { transform:'scaleY(0.1)' }, { transform:'scaleY(1)' }], opts).finished;
+    const a = lo.animate([{ transform:'scaleY(1)' }, { transform:'scaleY(0.1)' }, { transform:'scaleY(1)' }], opts);
+    return a.finished;
   }
 
   function headBob(){
@@ -164,7 +176,7 @@
       [{ transform:'translateY(0) rotate(0deg)' },
        { transform:'translateY(6px) rotate(-2deg)' },
        { transform:'translateY(0) rotate(0deg)' }],
-      { duration: 900, easing:'cubic-bezier(.3,.6,.3,1)', fill:'both' }
+      { duration: 900, easing:'cubic-bezier(.3,.6,.3,1)', fill:'none' }
     ).finished;
   }
 
@@ -178,19 +190,19 @@
        { transform:'rotate(-6deg)' },
        { transform:'rotate(3deg)'  },
        { transform:'rotate(0deg)' }],
-      { duration: 1600, easing:'ease-in-out', fill:'both' }
+      { duration: 1600, easing:'ease-in-out', fill:'none' }
     );
     // Subtle delayed tip follow-through
     if (wingC) {
       wingC.animate(
         [{ transform:'rotate(0deg)' }, { transform:'rotate(-2deg)' }, { transform:'rotate(1deg)' }, { transform:'rotate(0deg)' }],
-        { duration: 1600, delay: 120, easing:'ease-in-out', fill:'both' }
+        { duration: 1600, delay: 120, easing:'ease-in-out', fill:'none' }
       );
     }
     tails.forEach((t,i)=>{
       t.animate(
         [{ transform:'rotate(0deg)' }, { transform:`rotate(${i%2?2:-2}deg)` }, { transform:'rotate(0deg)' }],
-        { duration: 1200, delay: i*60, easing:'ease-in-out', fill:'both' }
+        { duration: 1200, delay: i*60, easing:'ease-in-out', fill:'none' }
       );
     });
     return Promise.resolve();
@@ -202,11 +214,11 @@
     if (!crow) return Promise.resolve();
     crow.animate(
       [{ transform:'translateY(0)' }, { transform:'translateY(-20px)' }, { transform:'translateY(-8px)' }, { transform:'translateY(0)' }],
-      { duration: 900, easing:'cubic-bezier(.3,.6,.3,1)', fill:'both' }
+      { duration: 900, easing:'cubic-bezier(.3,.6,.3,1)', fill:'none' }
     );
     feet.forEach(f => f.animate(
       [{ transform:'rotate(0deg)' }, { transform:'rotate(8deg)' }, { transform:'rotate(0deg)' }],
-      { duration: 400, easing:'ease-out', fill:'both' }
+      { duration: 400, easing:'ease-out', fill:'none' }
     ));
     dispatch('interact');
     return Promise.resolve();
@@ -218,11 +230,11 @@
     if (!up || !lo) return Promise.resolve();
     up.animate(
       [{ transform:'rotate(0)' }, { transform:'rotate(-12deg)' }, { transform:'rotate(0)' }],
-      { duration: 600, easing:'ease-in-out', fill:'both' }
+      { duration: 600, easing:'ease-in-out', fill:'none' }
     );
     return lo.animate(
       [{ transform:'rotate(0)' }, { transform:'rotate(14deg)' }, { transform:'rotate(0)' }],
-      { duration: 600, easing:'ease-in-out', fill:'both' }
+      { duration: 600, easing:'ease-in-out', fill:'none' }
     ).finished;
   }
 
@@ -235,7 +247,7 @@
         { transform: 'translateX(0px)' },
         { transform: 'translateX(32px)' }
       ],
-      { duration: 600, easing: 'steps(2,end)', fill: 'both' }
+      { duration: 600, easing: 'steps(2,end)', fill: 'none' }
     );
     head.animate(
       [
@@ -243,7 +255,7 @@
         { transform: 'translateY(4px)' },
         { transform: 'translateY(0px)' }
       ],
-      { duration: 300, iterations: 2, easing: 'ease-in-out' }
+      { duration: 300, iterations: 2, easing: 'ease-in-out', fill: 'none' }
     );
     dispatch('interact');
     return Promise.resolve();
@@ -262,6 +274,19 @@
   const hopStop      = () => stopLoop('loop-hop');
   const walkStart    = () => startLoop('loop-walk');
   const walkStop     = () => stopLoop('loop-walk');
+
+  async function cancel(){
+    try { activeAnims.forEach(a => a.cancel()); } catch {}
+    activeAnims.clear();
+  }
+
+  async function reset(){
+    await cancel();
+    if (host) {
+      const toRemove = Array.from(host.classList).filter(c => c.startsWith('loop-') || c.startsWith('animate-'));
+      toRemove.forEach(c => host.classList.remove(c));
+    }
+  }
 
   /* -------------------------------------------------------------
      Mount: fetch, underpaint, mask dilation, beak guards, pivots
@@ -316,7 +341,7 @@
     }
 
     // Expose API + host element for ambient scheduler
-    dispatch('ready', { api: { blink, caw, headBob, preen, hop, walk, headBobStart, headBobStop, preenStart, preenStop, hopStart, hopStop, walkStart, walkStop }, el: host });
+    dispatch('ready', { api: { blink, caw, headBob, preen, hop, walk, headBobStart, headBobStop, preenStart, preenStop, hopStart, hopStop, walkStart, walkStop, cancel, reset }, el: host });
 
     // Window-level caw => beak animation
     const onCawEvent = () => caw();
@@ -336,4 +361,5 @@
 
 <style>
   .crow :global(.rig), .crow :global([id]){ transform-box: fill-box; }
+  .crow :global(svg){ shape-rendering: geometricPrecision; }
 </style>
