@@ -220,24 +220,33 @@
   }
 
   function preen(){
-    const wing = svg.getElementById('Wing');
+    const wing  = svg.getElementById('Wing');
+    const wingA = svg.getElementById('WingA');
+    const wingB = svg.getElementById('WingB');
     const wingC = svg.getElementById('WingC');
     const tails = ['TailA','TailB','TailC','TailD'].map(id=>svg.getElementById(id)).filter(Boolean);
     if (!wing) return Promise.resolve();
+    const dur = 1600;
     wing.animate(
       [{ transform:'rotate(0deg)' },
        { transform:'rotate(-6deg)' },
        { transform:'rotate(3deg)'  },
        { transform:'rotate(0deg)' }],
-      { duration: 1600, easing:'ease-in-out', fill:'none' }
+      { duration: dur, easing:'ease-in-out', fill:'none' }
     );
-    // Subtle delayed tip follow-through
-    if (wingC) {
-      wingC.animate(
-        [{ transform:'rotate(0deg)' }, { transform:'rotate(-2deg)' }, { transform:'rotate(1deg)' }, { transform:'rotate(0deg)' }],
-        { duration: 1600, delay: 120, easing:'ease-in-out', fill:'none' }
-      );
-    }
+    // Segment follow-through for smoother articulation
+    if (wingA) wingA.animate(
+      [{ transform:'rotate(0deg)' }, { transform:'rotate(-4deg)' }, { transform:'rotate(2deg)' }, { transform:'rotate(0deg)' }],
+      { duration: dur, delay: 60, easing:'ease-in-out', fill:'none' }
+    );
+    if (wingB) wingB.animate(
+      [{ transform:'rotate(0deg)' }, { transform:'rotate(-3deg)' }, { transform:'rotate(1.5deg)' }, { transform:'rotate(0deg)' }],
+      { duration: dur, delay: 100, easing:'ease-in-out', fill:'none' }
+    );
+    if (wingC) wingC.animate(
+      [{ transform:'rotate(0deg)' }, { transform:'rotate(-2deg)' }, { transform:'rotate(1deg)' }, { transform:'rotate(0deg)' }],
+      { duration: dur, delay: 140, easing:'ease-in-out', fill:'none' }
+    );
     tails.forEach((t,i)=>{
       t.animate(
         [{ transform:'rotate(0deg)' }, { transform:`rotate(${i%2?2:-2}deg)` }, { transform:'rotate(0deg)' }],
@@ -248,17 +257,40 @@
   }
 
   function hop(){
-    const crow = svg.getElementById('Crow');
-    const feet = [svg.getElementById('FootLeft'), svg.getElementById('FootRight')].filter(Boolean);
+    const crow  = svg.getElementById('Crow');
+    const feet  = [svg.getElementById('FootLeft'), svg.getElementById('FootRight')].filter(Boolean);
+    const wing  = svg.getElementById('Wing');
+    const wingA = svg.getElementById('WingA');
+    const wingB = svg.getElementById('WingB');
+    const wingC = svg.getElementById('WingC');
     if (!crow) return Promise.resolve();
+    const dur = 900;
     crow.animate(
       [{ transform:'translateY(0)' }, { transform:'translateY(-20px)' }, { transform:'translateY(-8px)' }, { transform:'translateY(0)' }],
-      { duration: 900, easing:'cubic-bezier(.3,.6,.3,1)', fill:'none' }
+      { duration: dur, easing:'cubic-bezier(.3,.6,.3,1)', fill:'none' }
     );
     feet.forEach(f => f.animate(
       [{ transform:'rotate(0deg)' }, { transform:'rotate(8deg)' }, { transform:'rotate(0deg)' }],
       { duration: 400, easing:'ease-out', fill:'none' }
     ));
+    // Gentle, coordinated wing articulation to avoid rigid disconnects
+    const wEase = 'cubic-bezier(.3,.6,.3,1)';
+    if (wing)  wing.animate(
+      [{ transform:'rotate(0deg)' }, { transform:'rotate(-6deg)' }, { transform:'rotate(-2deg)' }, { transform:'rotate(0deg)' }],
+      { duration: dur, easing: wEase, fill:'none' }
+    );
+    if (wingA) wingA.animate(
+      [{ transform:'rotate(0deg)' }, { transform:'rotate(-5deg)' }, { transform:'rotate(-2deg)' }, { transform:'rotate(0deg)' }],
+      { duration: dur, delay: 40, easing: wEase, fill:'none' }
+    );
+    if (wingB) wingB.animate(
+      [{ transform:'rotate(0deg)' }, { transform:'rotate(-4deg)' }, { transform:'rotate(-1.5deg)' }, { transform:'rotate(0deg)' }],
+      { duration: dur, delay: 70, easing: wEase, fill:'none' }
+    );
+    if (wingC) wingC.animate(
+      [{ transform:'rotate(0deg)' }, { transform:'rotate(-3deg)' }, { transform:'rotate(-1deg)' }, { transform:'rotate(0deg)' }],
+      { duration: dur, delay: 100, easing: wEase, fill:'none' }
+    );
     dispatch('interact');
     return Promise.resolve();
   }
@@ -266,15 +298,29 @@
   function caw(){
     const up = svg.getElementById('BeakUpper');
     const lo = svg.getElementById('BeakLower');
+    const head = svg.getElementById('Head');
+    const neck = svg.getElementById('NeckMid');
     if (!up || !lo) return Promise.resolve();
-    up.animate(
-      [{ transform:'rotate(0)' }, { transform:'rotate(-12deg)' }, { transform:'rotate(0)' }],
-      { duration: 600, easing:'ease-in-out', fill:'none' }
-    );
-    return lo.animate(
-      [{ transform:'rotate(0)' }, { transform:'rotate(14deg)' }, { transform:'rotate(0)' }],
-      { duration: 600, easing:'ease-in-out', fill:'none' }
-    ).finished;
+    const dur = 600;
+    const ease = 'ease-in-out';
+    const aU = track(up.animate(
+      [{ transform:'rotate(0)' }, { transform:'rotate(-10deg)' }, { transform:'rotate(-2deg)' }, { transform:'rotate(0)' }],
+      { duration: dur, easing: ease, fill:'none' }
+    ));
+    const aL = track(lo.animate(
+      [{ transform:'rotate(0)' }, { transform:'rotate(14deg)' }, { transform:'rotate(5deg)' }, { transform:'rotate(0)' }],
+      { duration: dur, easing: ease, fill:'none' }
+    ));
+    // Slight skull/neck motion to maintain continuous texture and natural feel
+    const aH = head ? track(head.animate(
+      [{ transform:'rotate(0deg)' }, { transform:'rotate(-3deg)' }, { transform:'rotate(-1deg)' }, { transform:'rotate(0deg)' }],
+      { duration: dur, easing: ease, fill:'none' }
+    )) : null;
+    const aN = neck ? track(neck.animate(
+      [{ transform:'rotate(0deg)' }, { transform:'rotate(-1.2deg)' }, { transform:'rotate(-0.4deg)' }, { transform:'rotate(0deg)' }],
+      { duration: dur, easing: ease, fill:'none' }
+    )) : null;
+    return Promise.all([aU.finished, aL.finished, aH?.finished ?? Promise.resolve(), aN?.finished ?? Promise.resolve()]).then(()=>{});
   }
 
   function walk(){

@@ -1,21 +1,78 @@
-name: Bug report
-description: File a reproducible defect
-labels: [bug]
+name: Crow animation issues
+description: Buttons misfire; horizontal gaps; wing disconnect; beak/head misalignment; additional vertices needed
+title: "Buttons misfire; gaps; wing disconnect; beak/head misalignment; add vertices"
+labels: [bug, frontend]
+assignees: []
 body:
+  - type: markdown
+    attributes:
+      value: |
+        Please review the latest video artifacts and use the steps below to reproduce.
+
   - type: input
-    id: path
-    attributes: { label: Affected path, placeholder: "services/<domain>/<service>/..." }
-    validations: { required: true }
+    id: affected
+    attributes:
+      label: Affected paths
+      description: Files involved in this issue
+      value: |
+        frontend/src/components/Crow.svelte
+        frontend/src/lib/crowRig.js
+        frontend/src/lib/CrowRig.svelte
+        frontend/public/corvid_crow_anim_v9.svg
+    validations:
+      required: true
+
   - type: textarea
-    id: repro
-    attributes: { label: Reproduction steps, placeholder: "1. … 2. … 3. …" }
-    validations: { required: true }
-  - type: input
+    id: steps
+    attributes:
+      label: Reproduction steps
+      description: Ambient + manual checks
+      value: |
+        1. Start dev server: `bun dev` (verify scripts map correctly).
+        2. Navigate to `http://localhost:5173`.
+        3. Ambient check: wait for idle motions (e.g. head bob, caw) and watch for seams or gaps.
+        4. Manual check: click each action button (caw, hop, preen, head bob, blink, walk, etc.).
+        5. Observe whether:
+           - The correct action plays for each button.
+           - Frame 102 analogue: horizontal gaps appear along the head/body or wing/body seams.
+           - Frame 342 analogue: the wing disconnects or moves rigidly rather than fluidly.
+           - Frame 613 analogue: the lower beak moves smoothly while the upper beak/head does not follow, causing texture misalignment.
+           - The crow resets fully to its neutral pose after each action.
+        6. Note any additional artifacts (e.g. polygonal joints, residual transforms).
+    validations:
+      required: true
+
+  - type: textarea
     id: expected
-    attributes: { label: Expected result }
-  - type: input
-    id: actual
-    attributes: { label: Actual result }
+    attributes:
+      label: Expected result
+      value: |
+        - Each button triggers its designated action.
+        - No horizontal gaps or seams during any animation.
+        - Wings remain connected and move fluidly.
+        - Upper beak/head moves smoothly with lower beak, maintaining continuous texture.
+        - Crow resets to original pose after each action.
+    validations:
+      required: true
+
   - type: textarea
+    id: actual
+    attributes:
+      label: Actual result
+      value: |
+        - Buttons sometimes misfire (wrong or no action).
+        - Horizontal gaps visible (frame 102).
+        - Wing disconnect and rigid motion (frame 342).
+        - Lower beak moves, but upper beak/head doesn’t, causing misaligned texture (frame 613).
+        - Pose does not always reset fully.
+    validations:
+      required: true
+
+  - type: input
     id: env
-    attributes: { label: Environment, placeholder: "OS/Browser/Node/Docker tags" }
+    attributes:
+      label: Environment
+      value: macOS 13.4 • Chrome 117 • Bun v1.1.18 (Node 18 optional)
+    validations:
+      required: true
+
