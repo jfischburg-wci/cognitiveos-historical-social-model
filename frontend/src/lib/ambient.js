@@ -7,6 +7,7 @@ export function startAmbient({ rig, el, caw, reduceMotion = false }) {
   let cooldown = 0;        // ms left before another action may run
   let pauseUntil = 0;      // ms timestamp after user interaction
   let raf = null;
+  let nextBlinkAt = 0;     // timestamp for scheduled blink
 
   // Position and direction for bounded traversal
   let dir = 1;  // 1 = right, -1 = left
@@ -14,13 +15,19 @@ export function startAmbient({ rig, el, caw, reduceMotion = false }) {
 
   // Actions (weights tune relative frequency)
   const actions = [
-    { name: 'blink',   run: () => rig.blink(),                   weight: 4, cool: 900  },
+    // Blink is scheduled separately at ~6s cadence
     { name: 'headBob', run: () => rig.headBob(),                 weight: 3, cool: 1300 },
     { name: 'preen',   run: () => rig.preen(),                   weight: 2, cool: 2500 },
     { name: 'caw',     run: async () => { await rig.caw(); await caw?.(); }, weight: 2, cool: 1200 },
     { name: 'hop',     run: () => hopAcrossAndBack(el, rig),     weight: 2, cool: 2000 },
-    { name: 'walk',    run: () => rig.walk(),                    weight: 1, cool: 3000 },
+    { name: 'walk',    run: () => rig.walk(),                    weight: 1, cool: 3000 }
   ];
+
+  function scheduleNextBlink(base = 6000) {
+    // small jitter to avoid robotic feel
+    const jitter = 800; // ±800ms
+    nextBlinkAt = Date.now() + base + (Math.random() * (2 * jitter) - jitter);
+  }
 
   // Hop across and back: multiple hops with bounded drift & direction flips
   async function hopAcrossAndBack(el, rig) {
@@ -60,6 +67,13 @@ export function startAmbient({ rig, el, caw, reduceMotion = false }) {
     if (document.hidden) return;
     if (Date.now() < pauseUntil) return;
 
+    // Scheduled blink at ~6s cadence (independent of random pool)
+    if (nextBlinkAt && Date.now() >= nextBlinkAt) {
+      rig.blink().catch(() => {});
+      scheduleNextBlink();
+      // allow other actions this frame as well, unless in cooldown
+    }
+
     if (cooldown > 0) { cooldown -= 16; return; }
 
     // ~0.8% chance per frame → every few seconds in practice
@@ -72,6 +86,7 @@ export function startAmbient({ rig, el, caw, reduceMotion = false }) {
 
   // Respect reduced motion
   if (!reduceMotion) {
+    scheduleNextBlink();
     raf = requestAnimationFrame(tick);
 
     // User interaction pauses ambient a bit

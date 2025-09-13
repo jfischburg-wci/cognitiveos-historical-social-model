@@ -308,11 +308,9 @@
     prepareRig();
 
     // Ambient micro-behavior (respect reduceMotion)
-    let idle;
     const onEnter = () => headBob();
     const onClick = () => { hop(); dispatch('interact'); };
     if (!reduceMotion) {
-      idle = setInterval(() => blink(), 3500 + Math.random()*2500);
       host.addEventListener('mouseenter', onEnter);
       host.addEventListener('click', onClick);
     }
@@ -325,7 +323,6 @@
     window.addEventListener('corvid-caw', onCawEvent);
 
     onDestroy(() => {
-      if (idle) clearInterval(idle);
       if (!reduceMotion) {
         host.removeEventListener('mouseenter', onEnter);
         host.removeEventListener('click', onClick);
