@@ -184,7 +184,8 @@
     const aU1 = track(up.animate(kf, { duration: quick, easing: 'ease-in-out', fill: 'none' }));
     const aL1 = track(lo.animate(kf, { duration: quick, easing: 'ease-in-out', fill: 'none' }));
 
-    const maybeSecond = Math.random() < 0.35;
+    // Occasional double-blink, tuned for corvid-like behavior (~18%)
+    const maybeSecond = Math.random() < 0.18;
 
     return Promise.all([aU1.finished, aL1.finished]).then(async () => {
       if (maybeSecond) {
