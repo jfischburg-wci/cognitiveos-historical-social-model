@@ -296,8 +296,8 @@
   }
 
   function caw(){
-    const up   = svg.getElementById('BeakUpper');
-    const lo   = svg.getElementById('BeakLower');
+    const up = svg.getElementById('BeakUpper');
+    const lo = svg.getElementById('BeakLower');
     const head = svg.getElementById('Head');
     const neck = svg.getElementById('NeckMid');
     if (!up || !lo) return Promise.resolve();
