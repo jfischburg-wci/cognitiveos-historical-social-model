@@ -83,6 +83,7 @@
   function onCrowReady(e) {
     rig    = e.detail.api;
     crowEl = e.detail.el;
+    try { window.rig = rig; } catch {}
     ambientHandle?.stop?.();
     ambientHandle = startAmbient({ rig, el: crowEl, caw, reduceMotion });
     connectEvents();
@@ -92,6 +93,7 @@
   $: if (rig && crowEl) {
     ambientHandle?.stop?.();
     ambientHandle = startAmbient({ rig, el: crowEl, caw, reduceMotion });
+    try { window.rig = rig; } catch {}
   }
 
   onDestroy(() => ambientHandle?.stop?.());
