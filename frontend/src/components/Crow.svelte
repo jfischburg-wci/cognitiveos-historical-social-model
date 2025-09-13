@@ -17,9 +17,13 @@
   });
 
   // optional UX: quick ambient behavior
-  function ambient() {
-    rig && rig.blink();
-    if (Math.random() < 0.3) rig.caw();
+  async function ambient() {
+    if (!rig) return;
+    await rig.cancel?.();
+    await rig.reset?.();
+    await rig.blink();
+    if (Math.random() < 0.3) await rig.caw();
+    await rig.reset?.();
   }
 </script>
 

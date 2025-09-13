@@ -162,6 +162,8 @@
   <!-- Soft shadow for hop effect -->
   <ellipse id="Shadow" cx="355" cy="700" rx="160" ry="28" fill="rgba(0,0,0,0.35)"/>
   <style>
+    /* Improve antialiasing on transforms */
+    #CrowSVG{ shape-rendering: geometricPrecision; }
     /* Transform-box consistency for part groups */
     .rig{ transform-box: fill-box; transform-origin: center; }
 
