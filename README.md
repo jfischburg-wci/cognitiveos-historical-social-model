@@ -26,6 +26,20 @@ bun run dev -- --host
 ```
 Open the local URL printed by Vite (e.g., http://localhost:5173).
 
+## Makefile Shortcuts
+From the repo root, common tasks are available via `make`:
+
+- `setup`: install frontend deps + Playwright browser
+- `dev`: run Vite dev server
+- `build`: build frontend for production
+- `preview`: serve built app on :4173
+- `test-e2e` / `qa-actions`: run E2E suite and capture action screenshots
+- `qa-live-200` / `qa-live-100`: capture live blink screenshots at 200%/100% zoom
+- `typecheck`: svelte-check across Svelte files
+- `lint` / `format`: prettier check/write
+- `deploy`: trigger GitHub Pages workflow; `deploy-force`: empty commit push to main
+
+
 ## Two‑Pass Overview
 1) **Cognition (private)**: builds a scratchpad with intent, confidence, self‑reference, audience model, and risk assessment.  
 2) **Scoring**: temporal plausibility, self‑consistency with persona beliefs, lexicon/voice match.  
