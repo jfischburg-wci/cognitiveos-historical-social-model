@@ -8,7 +8,8 @@ PROD_URL := https://corvid.contentguru.ai
 PAGES_WORKFLOW := pages.yml
 
 .PHONY: help all setup dev build preview test-e2e qa-actions qa-live-200 qa-live-100 typecheck lint format clean ci deploy deploy-force prod-url \
-        be-setup be-run be-test be-health
+        be-setup be-run be-test be-health \
+        be-docker-build-dev be-docker-run-dev be-docker-build-prod be-docker-run-prod compose-up compose-down
 
 help:
 	@echo "Available targets:"
@@ -25,7 +26,7 @@ help:
 	@echo "  lint          - Prettier check common source files"
 	@echo "  format        - Prettier write common source files"
 	@echo "  clean         - Remove build/test artifacts"
-	@echo "  ci            - Build + test + typecheck + lint"
+	@echo "  ci            - Backend tests + build + e2e + typecheck + lint"
 	@echo "  deploy        - Trigger GitHub Pages workflow on main"
 	@echo "  deploy-force  - Push empty commit to main to trigger deploy"
 	@echo "  prod-url      - Print current production URL"
@@ -33,6 +34,12 @@ help:
 	@echo "  be-run        - Run backend API (uvicorn via uvx or python -m)"
 	@echo "  be-test       - Run backend tests (pytest via uvx or python -m)"
 	@echo "  be-health     - Curl backend /health"
+	@echo "  be-docker-build-dev  - Build backend dev image (reload)"
+	@echo "  be-docker-run-dev    - Run backend dev image on :8000"
+	@echo "  be-docker-build-prod - Build backend prod image"
+	@echo "  be-docker-run-prod   - Run backend prod image on :8000"
+	@echo "  compose-up     - docker compose up --build (api+ui)"
+	@echo "  compose-down   - docker compose down"
 
 all: build deploy
 
@@ -69,7 +76,7 @@ format:
 clean:
 	rm -rf $(FRONTEND)/dist $(FRONTEND)/test-results $(FRONTEND)/playwright-report
 
-ci: build test-e2e typecheck lint
+ci: be-test build test-e2e typecheck lint
 
 deploy:
 	gh workflow run $(PAGES_WORKFLOW) --ref main || echo "Use: gh workflow run $(PAGES_WORKFLOW) --ref main"
@@ -102,3 +109,25 @@ be-test:
 
 be-health:
 	@curl -fsS http://localhost:8000/health | jq . || curl -fsS http://localhost:8000/health || true
+
+# -----------------------------
+# Backend Docker / Compose
+# -----------------------------
+
+be-docker-build-dev:
+	docker build -t corvid-api:dev --target dev $(BACKEND)
+
+be-docker-run-dev:
+	docker run --rm -p 8000:8000 corvid-api:dev
+
+be-docker-build-prod:
+	docker build -t corvid-api:prod --target prod $(BACKEND)
+
+be-docker-run-prod:
+	docker run --rm -p 8000:8000 corvid-api:prod
+
+compose-up:
+	docker compose up --build
+
+compose-down:
+	docker compose down
