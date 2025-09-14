@@ -3,14 +3,17 @@
 
 # Variables
 FRONTEND := frontend
+BACKEND  := backend
 PROD_URL := https://corvid.contentguru.ai
 PAGES_WORKFLOW := pages.yml
 
-.PHONY: help setup dev build preview test-e2e qa-actions qa-live-200 qa-live-100 typecheck lint format clean ci deploy deploy-force prod-url
+.PHONY: help all setup dev build preview test-e2e qa-actions qa-live-200 qa-live-100 typecheck lint format clean ci deploy deploy-force prod-url \
+        be-setup be-run be-test be-health
 
 help:
 	@echo "Available targets:"
 	@echo "  setup         - Install frontend deps and Playwright browsers"
+	@echo "  all           - Build frontend and trigger deploy"
 	@echo "  dev           - Run Vite dev server (frontend)"
 	@echo "  build         - Build frontend for production"
 	@echo "  preview       - Serve built frontend preview (:4173)"
@@ -26,6 +29,12 @@ help:
 	@echo "  deploy        - Trigger GitHub Pages workflow on main"
 	@echo "  deploy-force  - Push empty commit to main to trigger deploy"
 	@echo "  prod-url      - Print current production URL"
+	@echo "  be-setup      - Create backend venv and install requirements (uv or pip)"
+	@echo "  be-run        - Run backend API (uvicorn via uvx or python -m)"
+	@echo "  be-test       - Run backend tests (pytest via uvx or python -m)"
+	@echo "  be-health     - Curl backend /health"
+
+all: build deploy
 
 setup:
 	cd $(FRONTEND) && bun install && bunx playwright install chromium
@@ -72,3 +81,24 @@ deploy-force:
 prod-url:
 	@echo $(PROD_URL)
 
+# -----------------------------
+# Backend tasks
+# -----------------------------
+
+be-setup:
+	cd $(BACKEND) && (command -v uv >/dev/null 2>&1 \
+		&& uv venv .venv && . .venv/bin/activate && uv pip install -r requirements.txt \
+		|| ( $$(command -v python3 || echo python) -m venv .venv && . .venv/bin/activate && pip install -r requirements.txt ))
+
+be-run:
+	cd $(BACKEND) && (command -v uvx >/dev/null 2>&1 \
+		&& uvx uvicorn main:app --host 0.0.0.0 --port 8000 --reload \
+		|| $$(command -v python3 || echo python) -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload)
+
+be-test:
+	cd $(BACKEND) && (command -v uvx >/dev/null 2>&1 \
+		&& uvx pytest -q \
+		|| $$(command -v python3 || echo python) -m pytest -q)
+
+be-health:
+	@curl -fsS http://localhost:8000/health | jq . || curl -fsS http://localhost:8000/health || true
