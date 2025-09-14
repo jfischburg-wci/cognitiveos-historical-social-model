@@ -37,6 +37,25 @@
     }
   }
 
+  // Wrap Head + BeakUpper into a single group so they can rotate from a common jaw hinge
+  function ensureHeadUpperGroup() {
+    if (!svg) return;
+    const head = svg.getElementById('Head');
+    const bu   = svg.getElementById('BeakUpper');
+    if (!head || !bu) return;
+    if (svg.getElementById('HeadUpper')) return; // already wrapped
+
+    const parent = head.parentNode; // expected Crow group
+    const group = document.createElementNS('http://www.w3.org/2000/svg','g');
+    group.setAttribute('id','HeadUpper');
+    group.setAttribute('class','part headUpper');
+    // Insert before the earlier of head/beakUpper, then move both inside
+    const before = (head.compareDocumentPosition(bu) & Node.DOCUMENT_POSITION_FOLLOWING) ? head : bu;
+    parent.insertBefore(group, before);
+    parent.removeChild(head); group.appendChild(head);
+    parent.removeChild(bu);   group.appendChild(bu);
+  }
+
   // Inject fallback keyframes/classes if the SVG didn’t ship with them
   function ensureAnimationStyle() {
     if (!svg) return;
@@ -141,6 +160,8 @@
     const RFOOT= { x: vb.width*0.49, y: vb.height*0.82 };
 
     setOrigin('Head', HEAD.x, HEAD.y);
+    // HeadUpper rotates from the jaw hinge to keep skull + upper beak continuous
+    setOrigin('HeadUpper', BU.x, BU.y);
     setOrigin('Wing',  WING.x,  WING.y);
     setOrigin('WingA', WINGA.x, WINGA.y);
     setOrigin('WingB', WINGB.x, WINGB.y);
@@ -153,7 +174,7 @@
     setOrigin('FootRight', RFOOT.x, RFOOT.y);
 
     // Hint to engines that these nodes will animate transforms
-    ['Crow','Head','NeckMid','Wing','WingA','WingB','WingC','BeakUpper','BeakLower','TailA','TailB','TailC','TailD','Legs','Feet','FootLeft','FootRight']
+    ['Crow','Head','HeadUpper','NeckMid','Wing','WingA','WingB','WingC','BeakUpper','BeakLower','TailA','TailB','TailC','TailD','Legs','Feet','FootLeft','FootRight']
       .forEach(id => { const el = svg.getElementById(id); if (el) el.style.willChange = 'transform'; });
   }
 
@@ -309,31 +330,36 @@
   }
 
   function caw(){
-    const up = svg.getElementById('BeakUpper');
-    const lo = svg.getElementById('BeakLower');
-    const head = svg.getElementById('Head');
-    const neck = svg.getElementById('NeckMid');
-    if (!up || !lo) return Promise.resolve();
-    const dur = 600;
-    const ease = 'ease-in-out';
-    const aU = track(up.animate(
-      [{ transform:'rotate(0)' }, { transform:'rotate(-10deg)' }, { transform:'rotate(-2deg)' }, { transform:'rotate(0)' }],
-      { duration: dur, easing: ease, fill:'none' }
-    ));
-    const aL = track(lo.animate(
-      [{ transform:'rotate(0)' }, { transform:'rotate(14deg)' }, { transform:'rotate(5deg)' }, { transform:'rotate(0)' }],
-      { duration: dur, easing: ease, fill:'none' }
-    ));
-    // Slight skull/neck motion to maintain continuous texture and natural feel
-    const aH = head ? track(head.animate(
-      [{ transform:'rotate(0deg)' }, { transform:'rotate(-3deg)' }, { transform:'rotate(-1deg)' }, { transform:'rotate(0deg)' }],
-      { duration: dur, easing: ease, fill:'none' }
-    )) : null;
-    const aN = neck ? track(neck.animate(
-      [{ transform:'rotate(0deg)' }, { transform:'rotate(-1.2deg)' }, { transform:'rotate(-0.4deg)' }, { transform:'rotate(0deg)' }],
-      { duration: dur, easing: ease, fill:'none' }
-    )) : null;
-    return Promise.all([aU.finished, aL.finished, aH?.finished ?? Promise.resolve(), aN?.finished ?? Promise.resolve()]).then(()=>{});
+    const headUpper = svg.getElementById('HeadUpper');
+    const lo        = svg.getElementById('BeakLower');
+    const neck      = svg.getElementById('NeckMid');
+    if (!headUpper || !lo) return Promise.resolve();
+
+    const durJaw = 180; // ms
+    const ease   = 'cubic-bezier(.2,.8,.2,1)';
+
+    // Upper head (skull + upper beak) pitches slightly up around jaw hinge
+    const aHU = track(headUpper.animate([
+      { transform:'rotate(0deg)' },
+      { transform:'rotate(-10deg)' },
+      { transform:'rotate(0deg)' }
+    ], { duration: durJaw, easing: ease, fill:'none' }));
+
+    // Lower beak rotates down around the same hinge
+    const aL = track(lo.animate([
+      { transform:'rotate(0deg)' },
+      { transform:'rotate(32deg)' },
+      { transform:'rotate(0deg)' }
+    ], { duration: durJaw, easing: ease, fill:'none' }));
+
+    // Neck thrust: slight forward/up tilt and translation; retract as jaw closes
+    const aN = neck ? track(neck.animate([
+      { transform:'translate(0px, 0px) rotate(0deg)' },
+      { transform:'translate(2px, -4px) rotate(-6deg)' },
+      { transform:'translate(0px, 0px) rotate(0deg)' }
+    ], { duration: durJaw + 160, easing:'cubic-bezier(.3,.6,.3,1)', fill:'none' })) : null;
+
+    return Promise.all([aHU.finished, aL.finished, aN?.finished ?? Promise.resolve()]).then(()=>{});
   }
 
   function walk(){
@@ -396,6 +422,7 @@
     svg = host.querySelector('svg') || host.firstElementChild;
 
     ensureIds();
+    ensureHeadUpperGroup();
     ensureAnimationStyle();
     // Presence flags for fallback CSS selectors (set on host wrapper)
     if (svg.getElementById('Head')) host.classList.add('has-head');
