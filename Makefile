@@ -7,7 +7,7 @@ BACKEND  := backend
 PROD_URL := https://corvid.contentguru.ai
 PAGES_WORKFLOW := pages.yml
 
-.PHONY: help all setup dev build preview test-e2e qa-actions qa-live-200 qa-live-100 typecheck lint format clean ci deploy deploy-force prod-url \
+.PHONY: help all setup dev build preview test-e2e qa-actions qa-live-200 qa-live-100 qa-live-caw-200 qa-live-caw-100 typecheck lint format clean ci deploy deploy-force prod-url \
         be-setup be-run be-test be-health \
         be-docker-build-dev be-docker-run-dev be-docker-build-prod be-docker-run-prod compose-up compose-down
 
@@ -22,6 +22,8 @@ help:
 	@echo "  qa-actions    - Alias for test-e2e (captures action screenshots)"
 	@echo "  qa-live-200   - Capture live blink at 200% zoom"
 	@echo "  qa-live-100   - Capture live blink at 100% zoom"
+	@echo "  qa-live-caw-200 - Capture live caw at 200% zoom"
+	@echo "  qa-live-caw-100 - Capture live caw at 100% zoom"
 	@echo "  typecheck     - Run svelte-check across Svelte code"
 	@echo "  lint          - Prettier check common source files"
 	@echo "  format        - Prettier write common source files"
@@ -63,6 +65,12 @@ qa-live-200:
 
 qa-live-100:
 	cd $(FRONTEND) && bunx playwright test -c tests/playwright.live1x.config.ts tests/specs/live-blink-1x.spec.ts
+
+qa-live-caw-200:
+	cd $(FRONTEND) && bunx playwright test -c tests/playwright.live.config.ts tests/specs/live-caw.spec.ts
+
+qa-live-caw-100:
+	cd $(FRONTEND) && bunx playwright test -c tests/playwright.live1x.config.ts tests/specs/live-caw-1x.spec.ts
 
 typecheck:
 	cd $(FRONTEND) && bunx svelte-check
