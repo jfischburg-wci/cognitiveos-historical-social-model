@@ -10,6 +10,7 @@
   const dispatch = createEventDispatcher();
   let host, svg;
   const activeAnims = new Set();
+  const boneRanges = new Map(); // id -> [min,max] for pitch
 
   function track(anim){
     if (!anim) return anim;
@@ -177,6 +178,7 @@
         const el = ensureGroup(b.id, b.alias);
         const piv = toPx(b.pivot);
         if (el && piv) el.style.transformOrigin = `${piv.x}px ${piv.y}px`;
+        if (b?.dof?.pitch) boneRanges.set(b.id, b.dof.pitch);
         pending.delete(b.id);
       }
     }
@@ -349,14 +351,12 @@
        { transform:'translateY(0) rotate(0deg)' }],
       { duration: 900, easing:'cubic-bezier(.3,.6,.3,1)', fill:'none' }
     );
-    const aN = neckm ? neckm.animate(
-      [{ transform:'rotate(0deg)' }, { transform:'rotate(-1deg)' }, { transform:'rotate(0deg)' }],
-      { duration: 900, easing:'cubic-bezier(.3,.6,.3,1)', fill:'none' }
-    ) : null;
-    const aNU = neckU ? neckU.animate(
-      [{ transform:'rotate(0deg)' }, { transform:'rotate(-0.8deg)' }, { transform:'rotate(0deg)' }],
-      { duration: 900, easing:'cubic-bezier(.3,.6,.3,1)', fill:'none' }
-    ) : null;
+    const aN  = neckm ? animateBone('NeckMid',   'NeckMid',   [
+      { transform:'rotate(0deg)' }, { transform:'rotate(-1deg)' }, { transform:'rotate(0deg)' }
+    ], { duration: 900, easing:'cubic-bezier(.3,.6,.3,1)', fill:'none' }) : null;
+    const aNU = neckU ? animateBone('NeckUpper', 'NeckUpper', [
+      { transform:'rotate(0deg)' }, { transform:'rotate(-0.8deg)' }, { transform:'rotate(0deg)' }
+    ], { duration: 900, easing:'cubic-bezier(.3,.6,.3,1)', fill:'none' }) : null;
     const aT = tailB ? tailB.animate(
       [{ transform:'rotate(0deg)' }, { transform:'rotate(2deg)' }, { transform:'rotate(0deg)' }],
       { duration: 900, easing:'cubic-bezier(.3,.6,.3,1)', fill:'none' }
@@ -374,25 +374,21 @@
     const tailB = svg.getElementById('TailBase');
     if (!shoulder) return Promise.resolve();
     const dur = 1600;
-    shoulder.animate(
-      [{ transform:'rotate(0deg)' },
-       { transform:'rotate(-6deg)' },
-       { transform:'rotate(3deg)'  },
-       { transform:'rotate(0deg)' }],
-      { duration: dur, easing:'ease-in-out', fill:'none' }
-    );
-    if (elbow) elbow.animate(
-      [{ transform:'rotate(0deg)' }, { transform:'rotate(-3deg)' }, { transform:'rotate(1.5deg)' }, { transform:'rotate(0deg)' }],
-      { duration: dur, delay: 100, easing:'ease-in-out', fill:'none' }
-    );
-    if (wrist) wrist.animate(
-      [{ transform:'rotate(0deg)' }, { transform:'rotate(-2deg)' }, { transform:'rotate(1deg)' }, { transform:'rotate(0deg)' }],
-      { duration: dur, delay: 140, easing:'ease-in-out', fill:'none' }
-    );
-    if (prim) prim.animate(
-      [{ transform:'rotate(0deg)' }, { transform:'rotate(-1.2deg)' }, { transform:'rotate(0.6deg)' }, { transform:'rotate(0deg)' }],
-      { duration: dur, delay: 180, easing:'ease-in-out', fill:'none' }
-    );
+    animateBone(shoulder?.id || 'Shoulder', 'Shoulder', [
+      { transform:'rotate(0deg)' },
+      { transform:'rotate(-6deg)' },
+      { transform:'rotate(3deg)'  },
+      { transform:'rotate(0deg)' }
+    ], { duration: dur, easing:'ease-in-out', fill:'none' });
+    if (elbow) animateBone(elbow.id, 'Elbow', [
+      { transform:'rotate(0deg)' }, { transform:'rotate(-3deg)' }, { transform:'rotate(1.5deg)' }, { transform:'rotate(0deg)' }
+    ], { duration: dur, delay: 100, easing:'ease-in-out', fill:'none' });
+    if (wrist) animateBone(wrist.id, 'Wrist', [
+      { transform:'rotate(0deg)' }, { transform:'rotate(-2deg)' }, { transform:'rotate(1deg)' }, { transform:'rotate(0deg)' }
+    ], { duration: dur, delay: 140, easing:'ease-in-out', fill:'none' });
+    if (prim) animateBone(prim.id, 'Primaries', [
+      { transform:'rotate(0deg)' }, { transform:'rotate(-1.2deg)' }, { transform:'rotate(0.6deg)' }, { transform:'rotate(0deg)' }
+    ], { duration: dur, delay: 180, easing:'ease-in-out', fill:'none' });
     if (tailB) tailB.animate(
       [{ transform:'rotate(0deg)' }, { transform:'rotate(2.4deg)' }, { transform:'rotate(0deg)' }],
       { duration: 1200, delay: 120, easing:'ease-in-out', fill:'none' }
@@ -435,18 +431,15 @@
     ));
     // Gentle, coordinated wing articulation to avoid rigid disconnects
     const wEase = 'cubic-bezier(.3,.6,.3,1)';
-    if (shoulder) shoulder.animate(
-      [{ transform:'rotate(0deg)' }, { transform:'rotate(-6deg)' }, { transform:'rotate(-2deg)' }, { transform:'rotate(0deg)' }],
-      { duration: dur, easing: wEase, fill:'none' }
-    );
-    if (elbow)    elbow.animate(
-      [{ transform:'rotate(0deg)' }, { transform:'rotate(-4deg)' }, { transform:'rotate(-1.5deg)' }, { transform:'rotate(0deg)' }],
-      { duration: dur, delay: 70, easing: wEase, fill:'none' }
-    );
-    if (wrist)    wrist.animate(
-      [{ transform:'rotate(0deg)' }, { transform:'rotate(-3deg)' }, { transform:'rotate(-1deg)' }, { transform:'rotate(0deg)' }],
-      { duration: dur, delay: 100, easing: wEase, fill:'none' }
-    );
+    if (shoulder) animateBone(shoulder.id, 'Shoulder', [
+      { transform:'rotate(0deg)' }, { transform:'rotate(-6deg)' }, { transform:'rotate(-2deg)' }, { transform:'rotate(0deg)' }
+    ], { duration: dur, easing: wEase, fill:'none' });
+    if (elbow)    animateBone(elbow.id, 'Elbow', [
+      { transform:'rotate(0deg)' }, { transform:'rotate(-4deg)' }, { transform:'rotate(-1.5deg)' }, { transform:'rotate(0deg)' }
+    ], { duration: dur, delay: 70, easing: wEase, fill:'none' });
+    if (wrist)    animateBone(wrist.id, 'Wrist', [
+      { transform:'rotate(0deg)' }, { transform:'rotate(-3deg)' }, { transform:'rotate(-1deg)' }, { transform:'rotate(0deg)' }
+    ], { duration: dur, delay: 100, easing: wEase, fill:'none' });
     if (tailB) tailB.animate(
       [{ transform:'rotate(0deg)' }, { transform:'rotate(3deg)' }, { transform:'rotate(0deg)' }],
       { duration: dur, delay: 60, easing: wEase, fill:'none' }
@@ -465,14 +458,14 @@
       { transform:`rotate(${h}deg)` },
       { transform:'rotate(0deg)' }
     ];
-    if (hipL)  hipL.animate( legKF(12,0,0,0), { duration: dur, easing: legEase, fill:'none' } );
-    if (kneeL) kneeL.animate( legKF(24,0,0,0), { duration: dur, delay: 10, easing: legEase, fill:'none' } );
-    if (anklL) anklL.animate( legKF(-10,0,0,0),{ duration: dur, delay: 20, easing: legEase, fill:'none' } );
-    if (toeL)  toeL.animate(  legKF(10,0,0,0), { duration: dur, delay: 40, easing: legEase, fill:'none' } );
-    if (hipR)  hipR.animate( legKF(12,0,0,0), { duration: dur, easing: legEase, fill:'none' } );
-    if (kneeR) kneeR.animate( legKF(24,0,0,0), { duration: dur, delay: 10, easing: legEase, fill:'none' } );
-    if (anklR) anklR.animate( legKF(-10,0,0,0),{ duration: dur, delay: 20, easing: legEase, fill:'none' } );
-    if (toeR)  toeR.animate(  legKF(10,0,0,0), { duration: dur, delay: 40, easing: legEase, fill:'none' } );
+    if (hipL)  animateBone(hipL.id,  'HipLeft',    [ { transform:'rotate(0deg)' }, { transform:'rotate(12deg)' }, { transform:'rotate(0deg)' } ], { duration: dur, easing: legEase, fill:'none' });
+    if (kneeL) animateBone(kneeL.id, 'KneeLeft',   [ { transform:'rotate(0deg)' }, { transform:'rotate(24deg)' }, { transform:'rotate(0deg)' } ], { duration: dur, delay: 10, easing: legEase, fill:'none' });
+    if (anklL) animateBone(anklL.id,'AnkleLeft',  [ { transform:'rotate(0deg)' }, { transform:'rotate(-10deg)' }, { transform:'rotate(0deg)' } ], { duration: dur, delay: 20, easing: legEase, fill:'none' });
+    if (toeL)  animateBone(toeL.id, 'ToesLeft',   [ { transform:'rotate(0deg)' }, { transform:'rotate(10deg)' }, { transform:'rotate(0deg)' } ], { duration: dur, delay: 40, easing: legEase, fill:'none' });
+    if (hipR)  animateBone(hipR.id,  'HipRight',   [ { transform:'rotate(0deg)' }, { transform:'rotate(12deg)' }, { transform:'rotate(0deg)' } ], { duration: dur, easing: legEase, fill:'none' });
+    if (kneeR) animateBone(kneeR.id, 'KneeRight',  [ { transform:'rotate(0deg)' }, { transform:'rotate(24deg)' }, { transform:'rotate(0deg)' } ], { duration: dur, delay: 10, easing: legEase, fill:'none' });
+    if (anklR) animateBone(anklR.id,'AnkleRight', [ { transform:'rotate(0deg)' }, { transform:'rotate(-10deg)' }, { transform:'rotate(0deg)' } ], { duration: dur, delay: 20, easing: legEase, fill:'none' });
+    if (toeR)  animateBone(toeR.id, 'ToesRight',  [ { transform:'rotate(0deg)' }, { transform:'rotate(10deg)' }, { transform:'rotate(0deg)' } ], { duration: dur, delay: 40, easing: legEase, fill:'none' });
     dispatch('interact');
     return Promise.resolve();
   }
@@ -660,4 +653,27 @@
 <style>
   .crow :global(.rig), .crow :global([id]){ transform-box: fill-box; }
   .crow :global(svg){ shape-rendering: geometricPrecision; }
+  // Clamp helpers from spec
+  const clampAngle = (id, deg) => {
+    const r = boneRanges.get(id);
+    if (!r || !Array.isArray(r) || r.length < 2) return deg;
+    return Math.max(r[0], Math.min(r[1], deg));
+  };
+
+  function clampTransformStr(id, s){
+    if (!s) return s;
+    return s.replace(/rotate\((-?\d+(?:\.\d+)?)deg\)/g, (_m, a) => `rotate(${clampAngle(id, parseFloat(a))}deg)`);
+  }
+
+  function animateBone(elId, boneId, keyframes, options){
+    const el = svg?.getElementById(elId);
+    if (!el) return null;
+    const adj = (keyframes || []).map(k => {
+      const obj = { ...k };
+      if (obj.transform) obj.transform = clampTransformStr(boneId, obj.transform);
+      return obj;
+    });
+    return track(el.animate(adj, options));
+  }
+
 </style>
