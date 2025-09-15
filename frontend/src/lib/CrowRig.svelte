@@ -24,23 +24,27 @@
   }
 
   // Constraint helpers sourced from skeleton spec
-  const clampAngle = (id, deg) => {
-    const r = boneRanges.get(id);
+  const clampAngle = (id, deg, actionName='') => {
+    const base = boneRanges.get(id);
+    const actionRange = (() => {
+      try { return constraints?.actions?.[actionName]?.pitch?.[id]; } catch { return null; }
+    })();
+    const r = actionRange || base;
     if (!r || !Array.isArray(r) || r.length < 2) return deg;
     return Math.max(r[0], Math.min(r[1], deg));
   };
 
-  function clampTransformStr(id, s){
+  function clampTransformStr(id, s, actionName=''){
     if (!s) return s;
-    return s.replace(/rotate\((-?\d+(?:\.\d+)?)deg\)/g, (_m, a) => `rotate(${clampAngle(id, parseFloat(a))}deg)`);
+    return s.replace(/rotate\((-?\d+(?:\.\d+)?)deg\)/g, (_m, a) => `rotate(${clampAngle(id, parseFloat(a), actionName)}deg)`);
   }
 
-  function animateBone(elId, boneId, keyframes, options){
+  function animateBone(elId, boneId, keyframes, options, actionName=''){
     const el = svg?.getElementById(elId);
     if (!el) return null;
     const adj = (keyframes || []).map(k => {
       const obj = { ...k };
-      if (obj.transform) obj.transform = clampTransformStr(boneId, obj.transform);
+      if (obj.transform) obj.transform = clampTransformStr(boneId, obj.transform, actionName);
       return obj;
     });
     return track(el.animate(adj, options));
@@ -441,10 +445,10 @@
     );
     const aN  = neckm ? animateBone('NeckMid',   'NeckMid',   [
       { transform:'rotate(0deg)' }, { transform:'rotate(-1deg)' }, { transform:'rotate(0deg)' }
-    ], { duration: 900, easing:'cubic-bezier(.3,.6,.3,1)', fill:'none' }) : null;
+    ], { duration: 900, easing:'cubic-bezier(.3,.6,.3,1)', fill:'none' }, 'headBob') : null;
     const aNU = neckU ? animateBone('NeckUpper', 'NeckUpper', [
       { transform:'rotate(0deg)' }, { transform:'rotate(-0.8deg)' }, { transform:'rotate(0deg)' }
-    ], { duration: 900, easing:'cubic-bezier(.3,.6,.3,1)', fill:'none' }) : null;
+    ], { duration: 900, easing:'cubic-bezier(.3,.6,.3,1)', fill:'none' }, 'headBob') : null;
     const aT = tailB ? tailB.animate(
       [{ transform:'rotate(0deg)' }, { transform:'rotate(2deg)' }, { transform:'rotate(0deg)' }],
       { duration: 900, easing:'cubic-bezier(.3,.6,.3,1)', fill:'none' }
@@ -467,16 +471,16 @@
       { transform:'rotate(-6deg)' },
       { transform:'rotate(3deg)'  },
       { transform:'rotate(0deg)' }
-    ], { duration: dur, easing:'ease-in-out', fill:'none' });
+    ], { duration: dur, easing:'ease-in-out', fill:'none' }, 'preen');
     if (elbow) animateBone(elbow.id, 'Elbow', [
       { transform:'rotate(0deg)' }, { transform:'rotate(-3deg)' }, { transform:'rotate(1.5deg)' }, { transform:'rotate(0deg)' }
-    ], { duration: dur, delay: 100, easing:'ease-in-out', fill:'none' });
+    ], { duration: dur, delay: 100, easing:'ease-in-out', fill:'none' }, 'preen');
     if (wrist) animateBone(wrist.id, 'Wrist', [
       { transform:'rotate(0deg)' }, { transform:'rotate(-2deg)' }, { transform:'rotate(1deg)' }, { transform:'rotate(0deg)' }
-    ], { duration: dur, delay: 140, easing:'ease-in-out', fill:'none' });
+    ], { duration: dur, delay: 140, easing:'ease-in-out', fill:'none' }, 'preen');
     if (prim) animateBone(prim.id, 'Primaries', [
       { transform:'rotate(0deg)' }, { transform:'rotate(-1.2deg)' }, { transform:'rotate(0.6deg)' }, { transform:'rotate(0deg)' }
-    ], { duration: dur, delay: 180, easing:'ease-in-out', fill:'none' });
+    ], { duration: dur, delay: 180, easing:'ease-in-out', fill:'none' }, 'preen');
     if (tailB) tailB.animate(
       [{ transform:'rotate(0deg)' }, { transform:'rotate(2.4deg)' }, { transform:'rotate(0deg)' }],
       { duration: 1200, delay: 120, easing:'ease-in-out', fill:'none' }
@@ -521,13 +525,13 @@
     const wEase = 'cubic-bezier(.3,.6,.3,1)';
     if (shoulder) animateBone(shoulder.id, 'Shoulder', [
       { transform:'rotate(0deg)' }, { transform:'rotate(-6deg)' }, { transform:'rotate(-2deg)' }, { transform:'rotate(0deg)' }
-    ], { duration: dur, easing: wEase, fill:'none' });
+    ], { duration: dur, easing: wEase, fill:'none' }, 'hop');
     if (elbow)    animateBone(elbow.id, 'Elbow', [
       { transform:'rotate(0deg)' }, { transform:'rotate(-4deg)' }, { transform:'rotate(-1.5deg)' }, { transform:'rotate(0deg)' }
-    ], { duration: dur, delay: 70, easing: wEase, fill:'none' });
+    ], { duration: dur, delay: 70, easing: wEase, fill:'none' }, 'hop');
     if (wrist)    animateBone(wrist.id, 'Wrist', [
       { transform:'rotate(0deg)' }, { transform:'rotate(-3deg)' }, { transform:'rotate(-1deg)' }, { transform:'rotate(0deg)' }
-    ], { duration: dur, delay: 100, easing: wEase, fill:'none' });
+    ], { duration: dur, delay: 100, easing: wEase, fill:'none' }, 'hop');
     if (tailB) tailB.animate(
       [{ transform:'rotate(0deg)' }, { transform:'rotate(3deg)' }, { transform:'rotate(0deg)' }],
       { duration: dur, delay: 60, easing: wEase, fill:'none' }
@@ -546,14 +550,14 @@
       { transform:`rotate(${h}deg)` },
       { transform:'rotate(0deg)' }
     ];
-    if (hipL)  animateBone(hipL.id,  'HipLeft',    [ { transform:'rotate(0deg)' }, { transform:'rotate(12deg)' }, { transform:'rotate(0deg)' } ], { duration: dur, easing: legEase, fill:'none' });
-    if (kneeL) animateBone(kneeL.id, 'KneeLeft',   [ { transform:'rotate(0deg)' }, { transform:'rotate(24deg)' }, { transform:'rotate(0deg)' } ], { duration: dur, delay: 10, easing: legEase, fill:'none' });
-    if (anklL) animateBone(anklL.id,'AnkleLeft',  [ { transform:'rotate(0deg)' }, { transform:'rotate(-10deg)' }, { transform:'rotate(0deg)' } ], { duration: dur, delay: 20, easing: legEase, fill:'none' });
-    if (toeL)  animateBone(toeL.id, 'ToesLeft',   [ { transform:'rotate(0deg)' }, { transform:'rotate(10deg)' }, { transform:'rotate(0deg)' } ], { duration: dur, delay: 40, easing: legEase, fill:'none' });
-    if (hipR)  animateBone(hipR.id,  'HipRight',   [ { transform:'rotate(0deg)' }, { transform:'rotate(12deg)' }, { transform:'rotate(0deg)' } ], { duration: dur, easing: legEase, fill:'none' });
-    if (kneeR) animateBone(kneeR.id, 'KneeRight',  [ { transform:'rotate(0deg)' }, { transform:'rotate(24deg)' }, { transform:'rotate(0deg)' } ], { duration: dur, delay: 10, easing: legEase, fill:'none' });
-    if (anklR) animateBone(anklR.id,'AnkleRight', [ { transform:'rotate(0deg)' }, { transform:'rotate(-10deg)' }, { transform:'rotate(0deg)' } ], { duration: dur, delay: 20, easing: legEase, fill:'none' });
-    if (toeR)  animateBone(toeR.id, 'ToesRight',  [ { transform:'rotate(0deg)' }, { transform:'rotate(10deg)' }, { transform:'rotate(0deg)' } ], { duration: dur, delay: 40, easing: legEase, fill:'none' });
+    if (hipL)  animateBone(hipL.id,  'HipLeft',    [ { transform:'rotate(0deg)' }, { transform:'rotate(12deg)' }, { transform:'rotate(0deg)' } ], { duration: dur, easing: legEase, fill:'none' }, 'hop');
+    if (kneeL) animateBone(kneeL.id, 'KneeLeft',   [ { transform:'rotate(0deg)' }, { transform:'rotate(24deg)' }, { transform:'rotate(0deg)' } ], { duration: dur, delay: 10, easing: legEase, fill:'none' }, 'hop');
+    if (anklL) animateBone(anklL.id,'AnkleLeft',  [ { transform:'rotate(0deg)' }, { transform:'rotate(-10deg)' }, { transform:'rotate(0deg)' } ], { duration: dur, delay: 20, easing: legEase, fill:'none' }, 'hop');
+    if (toeL)  animateBone(toeL.id, 'ToesLeft',   [ { transform:'rotate(0deg)' }, { transform:'rotate(10deg)' }, { transform:'rotate(0deg)' } ], { duration: dur, delay: 40, easing: legEase, fill:'none' }, 'hop');
+    if (hipR)  animateBone(hipR.id,  'HipRight',   [ { transform:'rotate(0deg)' }, { transform:'rotate(12deg)' }, { transform:'rotate(0deg)' } ], { duration: dur, easing: legEase, fill:'none' }, 'hop');
+    if (kneeR) animateBone(kneeR.id, 'KneeRight',  [ { transform:'rotate(0deg)' }, { transform:'rotate(24deg)' }, { transform:'rotate(0deg)' } ], { duration: dur, delay: 10, easing: legEase, fill:'none' }, 'hop');
+    if (anklR) animateBone(anklR.id,'AnkleRight', [ { transform:'rotate(0deg)' }, { transform:'rotate(-10deg)' }, { transform:'rotate(0deg)' } ], { duration: dur, delay: 20, easing: legEase, fill:'none' }, 'hop');
+    if (toeR)  animateBone(toeR.id, 'ToesRight',  [ { transform:'rotate(0deg)' }, { transform:'rotate(10deg)' }, { transform:'rotate(0deg)' } ], { duration: dur, delay: 40, easing: legEase, fill:'none' }, 'hop');
     dispatch('interact');
     return Promise.resolve();
   }
@@ -568,26 +572,26 @@
     const durJaw = 200;
     const ease   = 'cubic-bezier(.2,.8,.2,1)';
     const anims = [];
-    if (skull) anims.push(track(skull.animate([
+    if (skull) anims.push(animateBone(skull.id || 'HeadSkull', 'HeadSkull', [
       { transform:'rotate(0deg)' },
       { transform:'rotate(-12deg)' },
       { transform:'rotate(0deg)' }
-    ], { duration: durJaw, easing: ease, fill:'none' })).finished);
-    if (up) anims.push(track(up.animate([
+    ], { duration: durJaw, easing: ease, fill:'none' }, 'caw')?.finished);
+    if (up) anims.push(animateBone(up.id, 'BeakUpper', [
       { transform:'rotate(0deg)' },
       { transform:'rotate(-12deg)' },
       { transform:'rotate(0deg)' }
-    ], { duration: durJaw, easing: ease, fill:'none' })).finished);
-    anims.push(track(lo.animate([
+    ], { duration: durJaw, easing: ease, fill:'none' }, 'caw')?.finished);
+    anims.push(animateBone(lo.id, 'BeakLower', [
       { transform:'rotate(0deg)' },
       { transform:'rotate(32deg)' },
       { transform:'rotate(0deg)' }
-    ], { duration: durJaw, easing: ease, fill:'none' })).finished);
-    if (neckU) anims.push(track(neckU.animate([
+    ], { duration: durJaw, easing: ease, fill:'none' }, 'caw')?.finished);
+    if (neckU) anims.push(animateBone(neckU.id || 'NeckUpper', 'NeckUpper', [
       { transform:'translate(0px, 0px) rotate(0deg)' },
       { transform:'translate(2px, -3px) rotate(-8deg)' },
       { transform:'translate(0px, 0px) rotate(0deg)' }
-    ], { duration: durJaw + 140, easing:'cubic-bezier(.3,.6,.3,1)', fill:'none' })).finished);
+    ], { duration: durJaw + 140, easing:'cubic-bezier(.3,.6,.3,1)', fill:'none' }, 'caw')?.finished);
 
     return Promise.all(anims).then(()=>{});
   }
@@ -726,6 +730,17 @@
     // Window-level caw => beak animation
     const onCawEvent = () => caw();
     window.addEventListener('corvid-caw', onCawEvent);
+    // Dev overlay toggle via custom event
+    const onOverlay = (e) => {
+      const enabled = !!(e && e.detail && e.detail.enabled);
+      if (enabled) drawDevOverlay();
+      else {
+        const ov = svg.getElementById('DevOverlay');
+        if (ov && ov.parentNode) ov.parentNode.removeChild(ov);
+      }
+      try { localStorage.setItem('corvidDevOverlay', enabled ? '1' : '0'); } catch {}
+    };
+    window.addEventListener('corvid-dev-overlay', onOverlay);
 
     onDestroy(() => {
       if (!reduceMotion) {
@@ -733,6 +748,7 @@
         host.removeEventListener('click', onClick);
       }
       window.removeEventListener('corvid-caw', onCawEvent);
+      window.removeEventListener('corvid-dev-overlay', onOverlay);
     });
   });
 </script>
