@@ -225,7 +225,7 @@
       <p class="tag">Iridescent social cognition in motion</p>
     </header>
 
-    <CrowRig reduceMotion={reduceMotion} on:ready={onCrowReady} on:interact={caw} />
+    <CrowRig reduceMotion={reduceMotion} on:ready={onCrowReady} />
 
     <section class="cta">
       <button class="caw" on:click={() => run('caw')} aria-label="Caw">Caw</button>

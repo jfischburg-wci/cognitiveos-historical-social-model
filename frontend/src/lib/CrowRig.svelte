@@ -264,9 +264,13 @@
       txt.textContent = b.id;
       txt.setAttribute('x', String(p.x + 5)); txt.setAttribute('y', String(p.y - 5));
       txt.setAttribute('font-size','9'); txt.setAttribute('fill','rgba(130,247,255,0.8)');
+      txt.setAttribute('id', `DevTxt-${b.id}`);
       g.appendChild(circ); g.appendChild(txt);
     });
     svg.appendChild(g);
+
+    // Start telemetry updates (angles)
+    startOverlayTelemetry();
   }
 
   function devOverlayEnabled(){
@@ -277,6 +281,39 @@
       if (localStorage.getItem('corvidDevOverlay') === '1') return true;
     } catch {}
     return false;
+  }
+
+  let devOverlayRaf = null;
+  function startOverlayTelemetry(){
+    cancelOverlayTelemetry();
+    const tick = () => {
+      try {
+        spec?.bones?.forEach?.((b) => {
+          const el = svg?.getElementById(b.id) || (b.alias && svg?.getElementById(b.alias));
+          const label = svg?.getElementById(`DevTxt-${b.id}`);
+          if (!el || !label) return;
+          const cs = getComputedStyle(el);
+          const t = cs.transform;
+          let deg = 0;
+          if (t && t !== 'none') {
+            try {
+              const m = new DOMMatrixReadOnly(t);
+              deg = Math.atan2(m.b, m.a) * 180 / Math.PI;
+            } catch {}
+          }
+          const base = boneRanges.get(b.id);
+          const rtxt = base ? ` [${base[0]}..${base[1]}]` : '';
+          label.textContent = `${b.id} ${deg.toFixed(1)}°${rtxt}`;
+        });
+      } catch {}
+      devOverlayRaf = requestAnimationFrame(tick);
+    };
+    devOverlayRaf = requestAnimationFrame(tick);
+  }
+
+  function cancelOverlayTelemetry(){
+    if (devOverlayRaf) cancelAnimationFrame(devOverlayRaf);
+    devOverlayRaf = null;
   }
 
   // Slightly dilate a mask so adjacent parts overlap (prevents AA slits)
@@ -716,6 +753,16 @@
     // Set anatomical pivots + perf hints
     prepareRig();
 
+    // Ensure neutral beak/head state (closed beak, neutral skull)
+    try {
+      const hu = svg.getElementById('HeadSkull') || svg.getElementById('HeadUpper') || svg.getElementById('Head');
+      const bu = svg.getElementById('BeakUpper');
+      const bl = svg.getElementById('BeakLower');
+      if (hu) hu.style.transform = 'rotate(0deg)';
+      if (bu) bu.style.transform = 'rotate(0deg)';
+      if (bl) bl.style.transform = 'rotate(0deg)';
+    } catch {}
+
     // Ambient micro-behavior (respect reduceMotion)
     const onEnter = () => headBob();
     const onClick = () => { hop(); dispatch('interact'); };
@@ -737,6 +784,7 @@
       else {
         const ov = svg.getElementById('DevOverlay');
         if (ov && ov.parentNode) ov.parentNode.removeChild(ov);
+        cancelOverlayTelemetry();
       }
       try { localStorage.setItem('corvidDevOverlay', enabled ? '1' : '0'); } catch {}
     };
