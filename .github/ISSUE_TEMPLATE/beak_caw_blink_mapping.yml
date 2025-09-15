@@ -1,0 +1,65 @@
+name: Beak open; caw lacks head; blink missing; buttons mis-wired; motion blocky
+description: Corvid rig issues — neutral beak, skull tilt/neck thrust for caw, proper blink, button mapping, smooth segmentation
+title: "Beak starts open; caw lacks skull/neck motion; blink missing; buttons mis-wired; motion blocky"
+labels: [bug, frontend]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please follow the steps to reproduce and attach mid/end screenshots.
+
+  - type: input
+    id: affected
+    attributes:
+      label: Affected paths
+      value: |
+        frontend/public/corvid_crow_anim_v9.svg
+        frontend/src/lib/CrowRig.svelte
+        frontend/src/lib/crowRig.js
+        frontend/src/components/Crow.svelte
+        frontend/src/lib/rig/constraints.json
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction steps
+      value: |
+        1. bun dev → open http://localhost:5173/?dev=1
+        2. Observe on load: beak state
+        3. Click Caw → lower jaw opens only? skull tilt/neck thrust?
+        4. Click Blink → eyelids close only? any other motion?
+        5. Click Preen, Head Bob, Hop, Walk → correct actions?
+        6. Watch wings/legs → blocky or segmented? gaps?
+        7. After each action → neutral pose with beak closed?
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected
+      value: |
+        - Crow loads with beak closed
+        - Caw: lower jaw down + skull/upper jaw up with small neck thrust; no gap
+        - Blink: eyelids close/reopen only; no head/body motion
+        - Buttons map to correct actions consistently
+        - Motion smooth with added bones/vertices; resets to neutral after actions
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual
+      value: |
+        - Beak starts open
+        - Caw opens lower jaw only; skull static; no thrust
+        - Blink triggers wrong motion or does nothing
+        - Buttons misfire or trigger wrong actions
+        - Blocky motion persists; does not always reset
+    validations:
+      required: true
+

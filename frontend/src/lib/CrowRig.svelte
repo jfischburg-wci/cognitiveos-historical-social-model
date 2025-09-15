@@ -703,6 +703,21 @@
       const toRemove = Array.from(host.classList).filter(c => c.startsWith('loop-') || c.startsWith('animate-'));
       toRemove.forEach(c => host.classList.remove(c));
     }
+    // Enforce neutral transforms for critical bones and eyelids
+    try {
+      const hu = svg?.getElementById('HeadSkull') || svg?.getElementById('HeadUpper') || svg?.getElementById('Head');
+      const bu = svg?.getElementById('BeakUpper');
+      const bl = svg?.getElementById('BeakLower');
+      const nu = svg?.getElementById('NeckUpper') || svg?.getElementById('NeckMid');
+      if (hu) hu.style.transform = 'rotate(0deg)';
+      if (bu) bu.style.transform = 'rotate(0deg)';
+      if (bl) bl.style.transform = 'rotate(0deg)';
+      if (nu) nu.style.transform = 'translate(0px, 0px) rotate(0deg)';
+      const up = svg?.getElementById('EyelidUpper');
+      const lo = svg?.getElementById('EyelidLower');
+      if (up) { up.style.opacity = '0'; up.style.transform = ''; }
+      if (lo) { lo.style.opacity = '0'; lo.style.transform = ''; }
+    } catch {}
   }
 
   /* -------------------------------------------------------------
