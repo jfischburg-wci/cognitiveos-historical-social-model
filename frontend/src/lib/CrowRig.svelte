@@ -414,6 +414,15 @@
     const wrist    = svg.getElementById('Wrist')    || svg.getElementById('WingC');
     const tailB    = svg.getElementById('TailBase');
     const tails    = ['TailA','TailB','TailC','TailD'].map(id=>svg.getElementById(id)).filter(Boolean);
+    // Legs (prefer bones, fall back to legacy groups)
+    const hipL  = svg.getElementById('HipLeft')   || svg.getElementById('LegLeft');
+    const kneeL = svg.getElementById('KneeLeft')  || null;
+    const anklL = svg.getElementById('AnkleLeft') || svg.getElementById('FootLeft');
+    const toeL  = svg.getElementById('ToesLeft')  || svg.getElementById('FootLeft');
+    const hipR  = svg.getElementById('HipRight')   || svg.getElementById('LegRight');
+    const kneeR = svg.getElementById('KneeRight')  || null;
+    const anklR = svg.getElementById('AnkleRight') || svg.getElementById('FootRight');
+    const toeR  = svg.getElementById('ToesRight')  || svg.getElementById('FootRight');
     if (!crow) return Promise.resolve();
     const dur = 900;
     crow.animate(
@@ -448,6 +457,22 @@
         { duration: dur-200, delay: 60 + i*40, easing: wEase, fill:'none' }
       );
     });
+
+    // Leg compression and toe curl during hop arc
+    const legEase = 'cubic-bezier(.3,.6,.3,1)';
+    const legKF = (h,k,a,t) => [
+      { transform:'rotate(0deg)' },
+      { transform:`rotate(${h}deg)` },
+      { transform:'rotate(0deg)' }
+    ];
+    if (hipL)  hipL.animate( legKF(12,0,0,0), { duration: dur, easing: legEase, fill:'none' } );
+    if (kneeL) kneeL.animate( legKF(24,0,0,0), { duration: dur, delay: 10, easing: legEase, fill:'none' } );
+    if (anklL) anklL.animate( legKF(-10,0,0,0),{ duration: dur, delay: 20, easing: legEase, fill:'none' } );
+    if (toeL)  toeL.animate(  legKF(10,0,0,0), { duration: dur, delay: 40, easing: legEase, fill:'none' } );
+    if (hipR)  hipR.animate( legKF(12,0,0,0), { duration: dur, easing: legEase, fill:'none' } );
+    if (kneeR) kneeR.animate( legKF(24,0,0,0), { duration: dur, delay: 10, easing: legEase, fill:'none' } );
+    if (anklR) anklR.animate( legKF(-10,0,0,0),{ duration: dur, delay: 20, easing: legEase, fill:'none' } );
+    if (toeR)  toeR.animate(  legKF(10,0,0,0), { duration: dur, delay: 40, easing: legEase, fill:'none' } );
     dispatch('interact');
     return Promise.resolve();
   }
@@ -489,6 +514,12 @@
   function walk(){
     const crow = svg.getElementById('Crow');
     const head = svg.getElementById('Head');
+    const hipL  = svg.getElementById('HipLeft')   || svg.getElementById('LegLeft');
+    const anklL = svg.getElementById('AnkleLeft') || svg.getElementById('FootLeft');
+    const toeL  = svg.getElementById('ToesLeft')  || svg.getElementById('FootLeft');
+    const hipR  = svg.getElementById('HipRight')   || svg.getElementById('LegRight');
+    const anklR = svg.getElementById('AnkleRight') || svg.getElementById('FootRight');
+    const toeR  = svg.getElementById('ToesRight')  || svg.getElementById('FootRight');
     if (!crow || !head) return Promise.resolve();
     crow.animate(
       [
@@ -505,6 +536,22 @@
       ],
       { duration: 300, iterations: 2, easing: 'ease-in-out', fill: 'none' }
     );
+    const step = (hip, ankl, toe, delay) => {
+      if (hip)  hip.animate(
+        [ { transform:'rotate(0deg)' }, { transform:'rotate(8deg)' }, { transform:'rotate(0deg)' } ],
+        { duration: 300, delay, easing:'ease-in-out', fill:'none' }
+      );
+      if (ankl) ankl.animate(
+        [ { transform:'rotate(0deg)' }, { transform:'rotate(-6deg)' }, { transform:'rotate(0deg)' } ],
+        { duration: 300, delay: delay+30, easing:'ease-in-out', fill:'none' }
+      );
+      if (toe)  toe.animate(
+        [ { transform:'rotate(0deg)' }, { transform:'rotate(6deg)' }, { transform:'rotate(0deg)' } ],
+        { duration: 300, delay: delay+50, easing:'ease-in-out', fill:'none' }
+      );
+    };
+    step(hipL, anklL, toeL, 0);
+    step(hipR, anklR, toeR, 300);
     dispatch('interact');
     return Promise.resolve();
   }
