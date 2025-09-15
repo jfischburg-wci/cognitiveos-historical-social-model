@@ -143,7 +143,20 @@
   function ensureSkeleton(){
     if (!svg || !spec || !Array.isArray(spec.bones)) return;
     const ns = 'http://www.w3.org/2000/svg';
-    const vb = svg.viewBox?.baseVal || { x:0, y:0, width: svg.width.baseVal.value, height: svg.height.baseVal.value };
+    const vb = svg.viewBox?.baseVal
+      || (
+        (svg.width && svg.width.baseVal && svg.height && svg.height.baseVal)
+          ? { x: 0, y: 0, width: svg.width.baseVal.value, height: svg.height.baseVal.value }
+          : (() => {
+              // Try getBBox as a last resort if available and svg is in the DOM
+              try {
+                const box = typeof svg.getBBox === 'function' ? svg.getBBox() : null;
+                if (box) return { x: box.x, y: box.y, width: box.width, height: box.height };
+              } catch {}
+              // Fallback to zeros
+              return { x: 0, y: 0, width: 0, height: 0 };
+            })()
+        );
 
     const toPx = (p) => p?.px ? { x:p.px[0], y:p.px[1] } : (p?.rel ? { x: vb.width*p.rel[0], y: vb.height*p.rel[1] } : null);
     const byId = (id) => svg.getElementById(id);
