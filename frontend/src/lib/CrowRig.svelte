@@ -148,12 +148,10 @@
         (svg.width && svg.width.baseVal && svg.height && svg.height.baseVal)
           ? { x: 0, y: 0, width: svg.width.baseVal.value, height: svg.height.baseVal.value }
           : (() => {
-              // Try getBBox as a last resort if available and svg is in the DOM
               try {
                 const box = typeof svg.getBBox === 'function' ? svg.getBBox() : null;
                 if (box) return { x: box.x, y: box.y, width: box.width, height: box.height };
               } catch {}
-              // Fallback to zeros
               return { x: 0, y: 0, width: 0, height: 0 };
             })()
         );
