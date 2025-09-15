@@ -12,7 +12,9 @@
     "build": "vite build",
     "preview": "vite preview --host",
     "test:e2e": "playwright test -c tests/playwright.config.ts",
-    "test:e2e:report": "playwright show-report -c tests/playwright.config.ts"
+    "test:e2e:report": "playwright show-report -c tests/playwright.config.ts",
+    "dev:overlay": "VITE_CORVID_DEV_OVERLAY=1 vite",
+    "preview:overlay": "VITE_CORVID_DEV_OVERLAY=1 vite preview --host"
   },
   "dependencies": {
     "svelte": "^4.2.0"

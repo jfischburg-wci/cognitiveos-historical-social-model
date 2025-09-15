@@ -1,6 +1,7 @@
 <script>
   import { createEventDispatcher, onMount, onDestroy } from 'svelte';
   import spec from './rig/corvid_v1.json';
+  import constraints from './rig/constraints.json';
 
   // Props
   export let src = '/corvid_crow_anim_v9.svg';
@@ -208,6 +209,15 @@
 
     // Perf hint
     spec.bones.forEach(b => { const el = byId(b.id); if (el) el.style.willChange = 'transform'; });
+
+    // Apply artist constraints (overrides spec if present)
+    try {
+      if (constraints?.pitch) {
+        Object.entries(constraints.pitch).forEach(([id, range]) => {
+          if (Array.isArray(range) && range.length === 2) boneRanges.set(id, range);
+        });
+      }
+    } catch {}
   }
 
   // Developer overlay: draws bone pivots and parent-child links.
@@ -257,6 +267,7 @@
 
   function devOverlayEnabled(){
     try {
+      if (import.meta?.env?.VITE_CORVID_DEV_OVERLAY === '1') return true;
       const q = new URLSearchParams(window.location.search);
       if (q.get('dev') === '1' || q.get('overlay') === '1') return true;
       if (localStorage.getItem('corvidDevOverlay') === '1') return true;

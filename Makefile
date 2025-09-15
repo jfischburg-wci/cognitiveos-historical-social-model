@@ -7,7 +7,7 @@ BACKEND  := backend
 PROD_URL := https://corvid.contentguru.ai
 PAGES_WORKFLOW := pages.yml
 
-.PHONY: help all setup dev build preview test-e2e qa-actions qa-live-200 qa-live-100 qa-live-caw-200 qa-live-caw-100 qa-live-hop-200 qa-live-hop-100 qa-live-walk-200 qa-live-walk-100 typecheck lint format clean ci deploy deploy-force prod-url \
+.PHONY: help all setup dev dev-overlay build preview preview-overlay test-e2e qa-actions qa-live-200 qa-live-100 qa-live-caw-200 qa-live-caw-100 qa-live-hop-200 qa-live-hop-100 qa-live-walk-200 qa-live-walk-100 typecheck lint format clean ci deploy deploy-force prod-url \
         be-setup be-run be-test be-health \
         be-docker-build-dev be-docker-run-dev be-docker-build-prod be-docker-run-prod compose-up compose-down
 
@@ -16,8 +16,10 @@ help:
 	@echo "  setup         - Install frontend deps and Playwright browsers"
 	@echo "  all           - Build frontend and trigger deploy"
 	@echo "  dev           - Run Vite dev server (frontend)"
+	@echo "  dev-overlay   - Dev server with dev overlay enabled"
 	@echo "  build         - Build frontend for production"
 	@echo "  preview       - Serve built frontend preview (:4173)"
+	@echo "  preview-overlay - Preview with dev overlay enabled"
 	@echo "  test-e2e      - Run Playwright e2e suite (local preview)"
 	@echo "  qa-actions    - Alias for test-e2e (captures action screenshots)"
 	@echo "  qa-live-200   - Capture live blink at 200% zoom"
@@ -55,11 +57,17 @@ setup:
 dev:
 	cd $(FRONTEND) && bun dev
 
+dev-overlay:
+	cd $(FRONTEND) && VITE_CORVID_DEV_OVERLAY=1 bun dev
+
 build:
 	cd $(FRONTEND) && bun run build
 
 preview:
 	cd $(FRONTEND) && bun run preview --host
+
+preview-overlay:
+	cd $(FRONTEND) && VITE_CORVID_DEV_OVERLAY=1 bun run preview --host
 
 test-e2e qa-actions:
 	cd $(FRONTEND) && bunx playwright install chromium && bun run test:e2e

@@ -1,0 +1,34 @@
+{
+  "pitch": {
+    "NeckBase": [-6, 6],
+    "NeckMid": [-8, 8],
+    "NeckUpper": [-12, 12],
+
+    "HeadSkull": [-15, 10],
+    "HeadSkullRoll": [-6, 6],
+    "BeakUpper": [-15, 10],
+    "BeakLower": [0, 45],
+
+    "Shoulder": [-30, 70],
+    "Elbow": [0, 80],
+    "Wrist": [0, 80],
+    "Primaries": [-12, 12],
+
+    "TailBase": [-12, 12],
+    "TailA": [-4, 4],
+    "TailB": [-4, 4],
+    "TailC": [-4, 4],
+    "TailD": [-4, 4],
+
+    "HipLeft": [-20, 40],
+    "KneeLeft": [0, 80],
+    "AnkleLeft": [-10, 20],
+    "ToesLeft": [0, 45],
+
+    "HipRight": [-20, 40],
+    "KneeRight": [0, 80],
+    "AnkleRight": [-10, 20],
+    "ToesRight": [0, 45]
+  }
+}
+
