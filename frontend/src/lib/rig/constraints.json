@@ -29,6 +29,51 @@
     "KneeRight": [0, 80],
     "AnkleRight": [-10, 20],
     "ToesRight": [0, 45]
+  },
+  "actions": {
+    "caw": {
+      "pitch": {
+        "HeadSkull": [-15, 10],
+        "BeakUpper": [-15, 10],
+        "BeakLower": [0, 45],
+        "NeckUpper": [-12, 12]
+      }
+    },
+    "preen": {
+      "pitch": {
+        "Shoulder": [-10, 10],
+        "Elbow": [-6, 6],
+        "Wrist": [-4, 4],
+        "Primaries": [-3, 3],
+        "TailBase": [-6, 6]
+      }
+    },
+    "hop": {
+      "pitch": {
+        "Shoulder": [-8, 8],
+        "Elbow": [-6, 6],
+        "Wrist": [-4, 4],
+        "TailBase": [-6, 6],
+        "HipLeft": [-10, 25],
+        "HipRight": [-10, 25]
+      }
+    },
+    "headBob": {
+      "pitch": {
+        "NeckMid": [-4, 4],
+        "NeckUpper": [-4, 4],
+        "TailBase": [-4, 4]
+      }
+    },
+    "walk": {
+      "pitch": {
+        "HipLeft": [-12, 20],
+        "HipRight": [-12, 20],
+        "AnkleLeft": [-8, 12],
+        "AnkleRight": [-8, 12],
+        "ToesLeft": [0, 24],
+        "ToesRight": [0, 24]
+      }
+    }
   }
 }
-

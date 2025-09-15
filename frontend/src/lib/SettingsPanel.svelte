@@ -4,8 +4,17 @@
   export let muted = false
   export let volume = 0.8
   export let reduceMotion = false
+  let devOverlay = false
   let open = false
   function caw(){ dispatch('caw') }
+  function toggleOverlay(){
+    try {
+      devOverlay = !devOverlay
+      if (devOverlay) localStorage.setItem('corvidDevOverlay','1');
+      else localStorage.removeItem('corvidDevOverlay');
+      window.dispatchEvent(new CustomEvent('corvid-dev-overlay', { detail: { enabled: devOverlay } }))
+    } catch {}
+  }
 </script>
 
 <div class="panel {open ? 'open' : ''}">
@@ -31,6 +40,12 @@
       <label>
         <input type="checkbox" bind:checked={reduceMotion} />
         Reduce motion
+      </label>
+    </div>
+    <div class="row">
+      <label>
+        <input type="checkbox" checked={devOverlay} on:change={toggleOverlay} />
+        Dev overlay
       </label>
     </div>
   </div>
