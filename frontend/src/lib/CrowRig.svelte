@@ -341,6 +341,7 @@
     const head = svg.getElementById('Head');
     const neckm = svg.getElementById('NeckMid');
     const neckU = svg.getElementById('NeckUpper');
+    const tailB = svg.getElementById('TailBase');
     if (!head) return Promise.resolve();
     const aH = head.animate(
       [{ transform:'translateY(0) rotate(0deg)' },
@@ -356,7 +357,11 @@
       [{ transform:'rotate(0deg)' }, { transform:'rotate(-0.8deg)' }, { transform:'rotate(0deg)' }],
       { duration: 900, easing:'cubic-bezier(.3,.6,.3,1)', fill:'none' }
     ) : null;
-    return Promise.all([aH.finished, aN?.finished ?? Promise.resolve(), aNU?.finished ?? Promise.resolve()]).then(()=>{});
+    const aT = tailB ? tailB.animate(
+      [{ transform:'rotate(0deg)' }, { transform:'rotate(2deg)' }, { transform:'rotate(0deg)' }],
+      { duration: 900, easing:'cubic-bezier(.3,.6,.3,1)', fill:'none' }
+    ) : null;
+    return Promise.all([aH.finished, aN?.finished ?? Promise.resolve(), aNU?.finished ?? Promise.resolve(), aT?.finished ?? Promise.resolve()]).then(()=>{});
   }
 
   function preen(){
@@ -366,6 +371,7 @@
     const wrist    = svg.getElementById('Wrist')    || svg.getElementById('WingC');
     const prim     = svg.getElementById('Primaries');
     const tails = ['TailA','TailB','TailC','TailD'].map(id=>svg.getElementById(id)).filter(Boolean);
+    const tailB = svg.getElementById('TailBase');
     if (!shoulder) return Promise.resolve();
     const dur = 1600;
     shoulder.animate(
@@ -387,6 +393,10 @@
       [{ transform:'rotate(0deg)' }, { transform:'rotate(-1.2deg)' }, { transform:'rotate(0.6deg)' }, { transform:'rotate(0deg)' }],
       { duration: dur, delay: 180, easing:'ease-in-out', fill:'none' }
     );
+    if (tailB) tailB.animate(
+      [{ transform:'rotate(0deg)' }, { transform:'rotate(2.4deg)' }, { transform:'rotate(0deg)' }],
+      { duration: 1200, delay: 120, easing:'ease-in-out', fill:'none' }
+    );
     tails.forEach((t,i)=>{
       t.animate(
         [{ transform:'rotate(0deg)' }, { transform:`rotate(${i%2?2:-2}deg)` }, { transform:'rotate(0deg)' }],
@@ -402,6 +412,8 @@
     const shoulder = svg.getElementById('Shoulder') || svg.getElementById('Wing');
     const elbow    = svg.getElementById('Elbow')    || svg.getElementById('WingB');
     const wrist    = svg.getElementById('Wrist')    || svg.getElementById('WingC');
+    const tailB    = svg.getElementById('TailBase');
+    const tails    = ['TailA','TailB','TailC','TailD'].map(id=>svg.getElementById(id)).filter(Boolean);
     if (!crow) return Promise.resolve();
     const dur = 900;
     crow.animate(
@@ -426,6 +438,16 @@
       [{ transform:'rotate(0deg)' }, { transform:'rotate(-3deg)' }, { transform:'rotate(-1deg)' }, { transform:'rotate(0deg)' }],
       { duration: dur, delay: 100, easing: wEase, fill:'none' }
     );
+    if (tailB) tailB.animate(
+      [{ transform:'rotate(0deg)' }, { transform:'rotate(3deg)' }, { transform:'rotate(0deg)' }],
+      { duration: dur, delay: 60, easing: wEase, fill:'none' }
+    );
+    tails.forEach((t,i)=>{
+      t.animate(
+        [{ transform:'rotate(0deg)' }, { transform:`rotate(${i%2?1.6:-1.6}deg)` }, { transform:'rotate(0deg)' }],
+        { duration: dur-200, delay: 60 + i*40, easing: wEase, fill:'none' }
+      );
+    });
     dispatch('interact');
     return Promise.resolve();
   }
