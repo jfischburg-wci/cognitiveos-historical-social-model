@@ -165,7 +165,7 @@
       if (el) return el;
       const g = document.createElementNS(ns,'g'); g.setAttribute('id', id); g.setAttribute('class','bone');
       const alias = aliasId ? byId(aliasId) : null;
-      if (alias && alias.parentNode) { alias.parentNode.insertBefore(g, alias); alias.parentNode.removeChild(alias); g.appendChild(alias); }
+      if (alias && alias.parentNode) { alias.replaceWith(g); g.appendChild(alias); }
       else { (byId('Crow') || svg).appendChild(g); }
       return g;
     };
