@@ -11,7 +11,7 @@
     {"id":"BeakUpper",   "parent":"NeckUpper", "pivot":{"rel":[0.60,0.23]}, "dof":{"pitch":[-15,10]}, "alias":"BeakUpper"},
     {"id":"BeakLower",   "parent":"NeckUpper", "pivot":{"rel":[0.61,0.26]}, "dof":{"pitch":[0,45]},   "alias":"BeakLower"},
 
-    {"id":"TailBase",    "parent":"Crow",      "pivot":{"rel":[0.19,0.62]}, "dof":{"pitch":[-12,12]}},
+    {"id":"TailBase",    "parent":"Crow",      "pivot":{"rel":[0.19,0.62]}, "dof":{"pitch":[-12,12]}, "alias":"Tail"},
 
     {"id":"Shoulder",    "parent":"Crow",      "pivot":{"rel":[0.33,0.36]}, "dof":{"pitch":[-30,70]},  "alias":"Wing"},
     {"id":"Elbow",       "parent":"Shoulder",  "pivot":{"rel":[0.40,0.38]}, "dof":{"pitch":[0,80]},    "alias":"WingB"},
@@ -29,4 +29,3 @@
     {"id":"ToesRight",   "parent":"AnkleRight","pivot":{"rel":[0.49,0.83]}, "dof":{"pitch":[0,45]},     "alias":"FootRight"}
   ]
 }
-
