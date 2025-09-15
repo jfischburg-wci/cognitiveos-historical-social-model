@@ -227,13 +227,14 @@
 
     <CrowRig reduceMotion={reduceMotion} on:ready={onCrowReady} />
 
+    <!-- Stop propagation on each button so clicks don't bubble to the surface and trigger brain-driven actions -->
     <section class="cta">
-      <button class="caw" on:click={() => run('caw')} aria-label="Caw">Caw</button>
-      <button class="caw" on:click={() => run('blink')} aria-label="Blink">Blink</button>
-      <button class="caw" on:click={() => run('headBob')} aria-label="Head Bob">Head Bob</button>
-      <button class="caw" on:click={() => run('preen')} aria-label="Preen">Preen</button>
-      <button class="caw" on:click={() => run('hop')} aria-label="Hop">Hop</button>
-      <button class="caw" on:click={() => run('walk')} aria-label="Walk">Walk</button>
+      <button class="caw" on:click|stopPropagation={() => run('caw')} aria-label="Caw">Caw</button>
+      <button class="caw" on:click|stopPropagation={() => run('blink')} aria-label="Blink">Blink</button>
+      <button class="caw" on:click|stopPropagation={() => run('headBob')} aria-label="Head Bob">Head Bob</button>
+      <button class="caw" on:click|stopPropagation={() => run('preen')} aria-label="Preen">Preen</button>
+      <button class="caw" on:click|stopPropagation={() => run('hop')} aria-label="Hop">Hop</button>
+      <button class="caw" on:click|stopPropagation={() => run('walk')} aria-label="Walk">Walk</button>
     </section>
 
     <section class="coming">
