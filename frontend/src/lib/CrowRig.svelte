@@ -22,6 +22,29 @@
     return anim;
   }
 
+  // Constraint helpers sourced from skeleton spec
+  const clampAngle = (id, deg) => {
+    const r = boneRanges.get(id);
+    if (!r || !Array.isArray(r) || r.length < 2) return deg;
+    return Math.max(r[0], Math.min(r[1], deg));
+  };
+
+  function clampTransformStr(id, s){
+    if (!s) return s;
+    return s.replace(/rotate\((-?\d+(?:\.\d+)?)deg\)/g, (_m, a) => `rotate(${clampAngle(id, parseFloat(a))}deg)`);
+  }
+
+  function animateBone(elId, boneId, keyframes, options){
+    const el = svg?.getElementById(elId);
+    if (!el) return null;
+    const adj = (keyframes || []).map(k => {
+      const obj = { ...k };
+      if (obj.transform) obj.transform = clampTransformStr(boneId, obj.transform);
+      return obj;
+    });
+    return track(el.animate(adj, options));
+  }
+
   /* -------------------------------------------------------------
      Utilities
   ------------------------------------------------------------- */
@@ -185,6 +208,60 @@
 
     // Perf hint
     spec.bones.forEach(b => { const el = byId(b.id); if (el) el.style.willChange = 'transform'; });
+  }
+
+  // Developer overlay: draws bone pivots and parent-child links.
+  function drawDevOverlay(){
+    if (!svg || !spec || !Array.isArray(spec.bones)) return;
+    const ns = 'http://www.w3.org/2000/svg';
+    // Remove existing
+    const existing = svg.getElementById('DevOverlay');
+    if (existing && existing.parentNode) existing.parentNode.removeChild(existing);
+    const vb = svg.viewBox?.baseVal
+      || ((svg.width && svg.width.baseVal && svg.height && svg.height.baseVal)
+          ? { x:0,y:0,width: svg.width.baseVal.value, height: svg.height.baseVal.value }
+          : { x:0,y:0,width:0,height:0 });
+    const toPx = (p) => p?.px ? { x:p.px[0], y:p.px[1] } : (p?.rel ? { x: vb.width*p.rel[0], y: vb.height*p.rel[1] } : null);
+    const pivots = new Map();
+    spec.bones.forEach(b => { const p = toPx(b.pivot); if (p) pivots.set(b.id, p); });
+    const g = document.createElementNS(ns,'g');
+    g.setAttribute('id','DevOverlay');
+    g.setAttribute('pointer-events','none');
+    g.setAttribute('style','mix-blend-mode:screen');
+    // Lines first
+    spec.bones.forEach(b => {
+      if (!b.parent) return;
+      const a = pivots.get(b.parent); const c = pivots.get(b.id);
+      if (!a || !c) return;
+      const line = document.createElementNS(ns,'line');
+      line.setAttribute('x1', a.x); line.setAttribute('y1', a.y);
+      line.setAttribute('x2', c.x); line.setAttribute('y2', c.y);
+      line.setAttribute('stroke', 'rgba(130,247,255,0.35)');
+      line.setAttribute('stroke-width','1.2');
+      g.appendChild(line);
+    });
+    // Pivots
+    spec.bones.forEach(b => {
+      const p = pivots.get(b.id); if (!p) return;
+      const circ = document.createElementNS(ns,'circle');
+      circ.setAttribute('cx', p.x); circ.setAttribute('cy', p.y); circ.setAttribute('r','3');
+      circ.setAttribute('fill','rgba(130,247,255,0.8)');
+      const txt = document.createElementNS(ns,'text');
+      txt.textContent = b.id;
+      txt.setAttribute('x', String(p.x + 5)); txt.setAttribute('y', String(p.y - 5));
+      txt.setAttribute('font-size','9'); txt.setAttribute('fill','rgba(130,247,255,0.8)');
+      g.appendChild(circ); g.appendChild(txt);
+    });
+    svg.appendChild(g);
+  }
+
+  function devOverlayEnabled(){
+    try {
+      const q = new URLSearchParams(window.location.search);
+      if (q.get('dev') === '1' || q.get('overlay') === '1') return true;
+      if (localStorage.getItem('corvidDevOverlay') === '1') return true;
+    } catch {}
+    return false;
   }
 
   // Slightly dilate a mask so adjacent parts overlap (prevents AA slits)
@@ -590,6 +667,7 @@
     ensureHeadGroups();
     ensureSkeleton();
     ensureAnimationStyle();
+    if (devOverlayEnabled()) drawDevOverlay();
     // Presence flags for fallback CSS selectors (set on host wrapper)
     if (svg.getElementById('Head')) host.classList.add('has-head');
     if (svg.getElementById('Wing')) host.classList.add('has-wing');
@@ -653,27 +731,5 @@
 <style>
   .crow :global(.rig), .crow :global([id]){ transform-box: fill-box; }
   .crow :global(svg){ shape-rendering: geometricPrecision; }
-  // Clamp helpers from spec
-  const clampAngle = (id, deg) => {
-    const r = boneRanges.get(id);
-    if (!r || !Array.isArray(r) || r.length < 2) return deg;
-    return Math.max(r[0], Math.min(r[1], deg));
-  };
-
-  function clampTransformStr(id, s){
-    if (!s) return s;
-    return s.replace(/rotate\((-?\d+(?:\.\d+)?)deg\)/g, (_m, a) => `rotate(${clampAngle(id, parseFloat(a))}deg)`);
-  }
-
-  function animateBone(elId, boneId, keyframes, options){
-    const el = svg?.getElementById(elId);
-    if (!el) return null;
-    const adj = (keyframes || []).map(k => {
-      const obj = { ...k };
-      if (obj.transform) obj.transform = clampTransformStr(boneId, obj.transform);
-      return obj;
-    });
-    return track(el.animate(adj, options));
-  }
 
 </style>

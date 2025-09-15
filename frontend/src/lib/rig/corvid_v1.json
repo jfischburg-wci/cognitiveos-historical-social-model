@@ -26,6 +26,11 @@
     {"id":"HipRight",    "parent":"Crow",      "pivot":{"rel":[0.49,0.74]}, "dof":{"pitch":[-20,40]},  "alias":"LegRight"},
     {"id":"KneeRight",   "parent":"HipRight",  "pivot":{"rel":[0.49,0.78]}, "dof":{"pitch":[0,80]},     "alias":"LegRight"},
     {"id":"AnkleRight",  "parent":"KneeRight", "pivot":{"rel":[0.49,0.82]}, "dof":{"pitch":[-10,20]},   "alias":"FootRight"},
-    {"id":"ToesRight",   "parent":"AnkleRight","pivot":{"rel":[0.49,0.83]}, "dof":{"pitch":[0,45]},     "alias":"FootRight"}
+    {"id":"ToesRight",   "parent":"AnkleRight","pivot":{"rel":[0.49,0.83]}, "dof":{"pitch":[0,45]},     "alias":"FootRight"},
+    {"id":"TailA",       "parent":"TailBase",  "pivot":{"rel":[0.19,0.62]}, "dof":{"pitch":[-4,4]},     "alias":"TailA"},
+    {"id":"TailB",       "parent":"TailBase",  "pivot":{"rel":[0.19,0.62]}, "dof":{"pitch":[-4,4]},     "alias":"TailB"},
+    {"id":"TailC",       "parent":"TailBase",  "pivot":{"rel":[0.19,0.62]}, "dof":{"pitch":[-4,4]},     "alias":"TailC"},
+    {"id":"TailD",       "parent":"TailBase",  "pivot":{"rel":[0.19,0.62]}, "dof":{"pitch":[-4,4]},     "alias":"TailD"},
+    {"id":"HeadSkullRoll", "parent":"NeckUpper", "pivot":{"rel":[0.60,0.23]}, "dof":{"pitch":[-6,6]}, "alias":"HeadSkull"}
   ]
 }
