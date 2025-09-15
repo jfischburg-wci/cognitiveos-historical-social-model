@@ -1,5 +1,6 @@
 <script>
   import { createEventDispatcher, onMount, onDestroy } from 'svelte';
+  import spec from './rig/corvid_v1.json';
 
   // Props
   export let src = '/corvid_crow_anim_v9.svg';
@@ -138,6 +139,41 @@
     svg.insertBefore(style, svg.firstChild);
   }
 
+  // Build a lightweight skeleton per spec: ensure runtime wrappers and pivots
+  function ensureSkeleton(){
+    if (!svg || !spec || !Array.isArray(spec.bones)) return;
+    const ns = 'http://www.w3.org/2000/svg';
+    const vb = svg.viewBox?.baseVal || { x:0, y:0, width: svg.width.baseVal.value, height: svg.height.baseVal.value };
+
+    const toPx = (p) => p?.px ? { x:p.px[0], y:p.px[1] } : (p?.rel ? { x: vb.width*p.rel[0], y: vb.height*p.rel[1] } : null);
+    const byId = (id) => svg.getElementById(id);
+    const ensureGroup = (id, aliasId) => {
+      let el = byId(id);
+      if (el) return el;
+      const g = document.createElementNS(ns,'g'); g.setAttribute('id', id); g.setAttribute('class','bone');
+      const alias = aliasId ? byId(aliasId) : null;
+      if (alias && alias.parentNode) { alias.parentNode.insertBefore(g, alias); alias.parentNode.removeChild(alias); g.appendChild(alias); }
+      else { (byId('Crow') || svg).appendChild(g); }
+      return g;
+    };
+
+    // Iterate a few passes so parents exist before children
+    const pending = new Set(spec.bones.map(b => b.id));
+    for (let pass=0; pass<3 && pending.size; pass++) {
+      for (const b of spec.bones) {
+        if (!pending.has(b.id)) continue;
+        if (b.parent && !byId(b.parent)) continue;
+        const el = ensureGroup(b.id, b.alias);
+        const piv = toPx(b.pivot);
+        if (el && piv) el.style.transformOrigin = `${piv.x}px ${piv.y}px`;
+        pending.delete(b.id);
+      }
+    }
+
+    // Perf hint
+    spec.bones.forEach(b => { const el = byId(b.id); if (el) el.style.willChange = 'transform'; });
+  }
+
   // Slightly dilate a mask so adjacent parts overlap (prevents AA slits)
   function dilateMask(maskId, radiusPx) {
     const ns = 'http://www.w3.org/2000/svg';
@@ -212,10 +248,9 @@
     const RFOOT= { x: vb.width*0.49, y: vb.height*0.82 };
 
     setOrigin('Head', HEAD.x, HEAD.y);
-    // New segments
-    setOrigin('HeadSkull', BU.x, BU.y);   // skull pitches around jaw hinge
-    setOrigin('NeckUpper', NECKM.x, NECKM.y); // neck-upper pitch/arc
-    // Legacy support: still set HeadUpper if present
+    // Legacy hints (skeleton sets proper pivots already)
+    setOrigin('HeadSkull', BU.x, BU.y);
+    setOrigin('NeckUpper', NECKM.x, NECKM.y);
     setOrigin('HeadUpper', BU.x, BU.y);
     setOrigin('Wing',  WING.x,  WING.y);
     setOrigin('WingA', WINGA.x, WINGA.y);
@@ -229,7 +264,7 @@
     setOrigin('FootRight', RFOOT.x, RFOOT.y);
 
     // Hint to engines that these nodes will animate transforms
-    ['Crow','Head','HeadSkull','NeckUpper','HeadUpper','NeckMid','Wing','WingA','WingB','WingC','BeakUpper','BeakLower','TailA','TailB','TailC','TailD','Legs','Feet','FootLeft','FootRight']
+    ['Crow','Head','HeadSkull','NeckBase','NeckUpper','HeadUpper','NeckMid','Shoulder','Elbow','Wrist','Primaries','TailBase','HipLeft','KneeLeft','AnkleLeft','ToesLeft','HipRight','KneeRight','AnkleRight','ToesRight','Wing','WingA','WingB','WingC','BeakUpper','BeakLower','TailA','TailB','TailC','TailD','Legs','Feet','FootLeft','FootRight']
       .forEach(id => { const el = svg.getElementById(id); if (el) el.style.willChange = 'transform'; });
   }
 
@@ -314,32 +349,32 @@
   }
 
   function preen(){
-    const wing  = svg.getElementById('Wing');
-    const wingA = svg.getElementById('WingA');
-    const wingB = svg.getElementById('WingB');
-    const wingC = svg.getElementById('WingC');
+    // Prefer articulated bones if present
+    const shoulder = svg.getElementById('Shoulder') || svg.getElementById('Wing');
+    const elbow    = svg.getElementById('Elbow')    || svg.getElementById('WingB');
+    const wrist    = svg.getElementById('Wrist')    || svg.getElementById('WingC');
+    const prim     = svg.getElementById('Primaries');
     const tails = ['TailA','TailB','TailC','TailD'].map(id=>svg.getElementById(id)).filter(Boolean);
-    if (!wing) return Promise.resolve();
+    if (!shoulder) return Promise.resolve();
     const dur = 1600;
-    wing.animate(
+    shoulder.animate(
       [{ transform:'rotate(0deg)' },
        { transform:'rotate(-6deg)' },
        { transform:'rotate(3deg)'  },
        { transform:'rotate(0deg)' }],
       { duration: dur, easing:'ease-in-out', fill:'none' }
     );
-    // Segment follow-through for smoother articulation
-    if (wingA) wingA.animate(
-      [{ transform:'rotate(0deg)' }, { transform:'rotate(-4deg)' }, { transform:'rotate(2deg)' }, { transform:'rotate(0deg)' }],
-      { duration: dur, delay: 60, easing:'ease-in-out', fill:'none' }
-    );
-    if (wingB) wingB.animate(
+    if (elbow) elbow.animate(
       [{ transform:'rotate(0deg)' }, { transform:'rotate(-3deg)' }, { transform:'rotate(1.5deg)' }, { transform:'rotate(0deg)' }],
       { duration: dur, delay: 100, easing:'ease-in-out', fill:'none' }
     );
-    if (wingC) wingC.animate(
+    if (wrist) wrist.animate(
       [{ transform:'rotate(0deg)' }, { transform:'rotate(-2deg)' }, { transform:'rotate(1deg)' }, { transform:'rotate(0deg)' }],
       { duration: dur, delay: 140, easing:'ease-in-out', fill:'none' }
+    );
+    if (prim) prim.animate(
+      [{ transform:'rotate(0deg)' }, { transform:'rotate(-1.2deg)' }, { transform:'rotate(0.6deg)' }, { transform:'rotate(0deg)' }],
+      { duration: dur, delay: 180, easing:'ease-in-out', fill:'none' }
     );
     tails.forEach((t,i)=>{
       t.animate(
@@ -353,10 +388,9 @@
   function hop(){
     const crow  = svg.getElementById('Crow');
     const feet  = [svg.getElementById('FootLeft'), svg.getElementById('FootRight')].filter(Boolean);
-    const wing  = svg.getElementById('Wing');
-    const wingA = svg.getElementById('WingA');
-    const wingB = svg.getElementById('WingB');
-    const wingC = svg.getElementById('WingC');
+    const shoulder = svg.getElementById('Shoulder') || svg.getElementById('Wing');
+    const elbow    = svg.getElementById('Elbow')    || svg.getElementById('WingB');
+    const wrist    = svg.getElementById('Wrist')    || svg.getElementById('WingC');
     if (!crow) return Promise.resolve();
     const dur = 900;
     crow.animate(
@@ -369,19 +403,15 @@
     ));
     // Gentle, coordinated wing articulation to avoid rigid disconnects
     const wEase = 'cubic-bezier(.3,.6,.3,1)';
-    if (wing)  wing.animate(
+    if (shoulder) shoulder.animate(
       [{ transform:'rotate(0deg)' }, { transform:'rotate(-6deg)' }, { transform:'rotate(-2deg)' }, { transform:'rotate(0deg)' }],
       { duration: dur, easing: wEase, fill:'none' }
     );
-    if (wingA) wingA.animate(
-      [{ transform:'rotate(0deg)' }, { transform:'rotate(-5deg)' }, { transform:'rotate(-2deg)' }, { transform:'rotate(0deg)' }],
-      { duration: dur, delay: 40, easing: wEase, fill:'none' }
-    );
-    if (wingB) wingB.animate(
+    if (elbow)    elbow.animate(
       [{ transform:'rotate(0deg)' }, { transform:'rotate(-4deg)' }, { transform:'rotate(-1.5deg)' }, { transform:'rotate(0deg)' }],
       { duration: dur, delay: 70, easing: wEase, fill:'none' }
     );
-    if (wingC) wingC.animate(
+    if (wrist)    wrist.animate(
       [{ transform:'rotate(0deg)' }, { transform:'rotate(-3deg)' }, { transform:'rotate(-1deg)' }, { transform:'rotate(0deg)' }],
       { duration: dur, delay: 100, easing: wEase, fill:'none' }
     );
@@ -485,6 +515,7 @@
     ensureIds();
     ensureHeadUpperGroup();
     ensureHeadGroups();
+    ensureSkeleton();
     ensureAnimationStyle();
     // Presence flags for fallback CSS selectors (set on host wrapper)
     if (svg.getElementById('Head')) host.classList.add('has-head');
