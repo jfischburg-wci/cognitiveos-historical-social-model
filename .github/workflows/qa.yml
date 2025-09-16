@@ -1,0 +1,142 @@
+name: QA Screenshots
+
+on:
+  workflow_dispatch:
+    inputs:
+      commit_back:
+        description: "Commit regenerated screenshots back to the branch"
+        required: false
+        default: "false"
+  pull_request:
+    types: [opened, synchronize, reopened]
+  release:
+    types: [published]
+
+jobs:
+  qa-on-pr:
+    if: github.event_name != 'release'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+        working-directory: frontend
+
+      - name: Install Playwright (Chromium)
+        run: bunx playwright install chromium
+        working-directory: frontend
+
+      - name: Run QA e2e (screenshots saved into docs/qa)
+        run: bun run test:e2e
+        working-directory: frontend
+
+      - name: Upload QA actions-seams artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: qa-actions-seams
+          path: docs/qa/actions-seams-reset-artifacts
+          if-no-files-found: ignore
+
+      - name: Upload QA live artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: qa-live
+          path: docs/qa/live
+          if-no-files-found: ignore
+
+      - name: Comment on PR with artifact links
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const body = [
+              `QA screenshots have been regenerated for this PR.`,
+              ``,
+              `Artifacts:`,
+              `- qa-actions-seams`,
+              `- qa-live`,
+              ``,
+              `Download them from the workflow run: ${runUrl}`
+            ].join('\n');
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body
+            });
+
+      - name: Optionally commit screenshots back to branch
+        if: github.event_name == 'workflow_dispatch' && inputs.commit_back == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ -n "$(git status --porcelain docs/qa)" ]; then
+            git config user.name "github-actions"
+            git config user.email "github-actions@users.noreply.github.com"
+            git add docs/qa/actions-seams-reset-artifacts docs/qa/live || true
+            git commit -m "docs(qa): refresh screenshots via CI" || true
+            git push
+          fi
+
+  qa-on-release:
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+        working-directory: frontend
+
+      - name: Install Playwright (Chromium)
+        run: bunx playwright install chromium
+        working-directory: frontend
+
+      - name: Run QA e2e (screenshots saved into docs/qa)
+        run: bun run test:e2e
+        working-directory: frontend
+
+      - name: Zip screenshots
+        run: |
+          zip -r qa-actions-seams.zip docs/qa/actions-seams-reset-artifacts || true
+          zip -r qa-live.zip docs/qa/live || true
+
+      - name: Upload QA assets to release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: qa-actions-seams.zip
+          asset_name: qa-actions-seams.zip
+          asset_content_type: application/zip
+
+      - name: Upload QA live assets to release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: qa-live.zip
+          asset_name: qa-live.zip
+          asset_content_type: application/zip
+
