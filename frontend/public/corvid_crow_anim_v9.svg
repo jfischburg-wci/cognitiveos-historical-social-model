@@ -76,26 +76,25 @@
     </g></mask>
     <!-- New segmentation: head, neck, wing (with two sub-segments) -->
     <mask id="maskHead"><use href="#crowSil"/><g fill="black">
-      <!-- keep only a window roughly around the head (excluding beak area) -->
-      <rect x="0" y="0" width="300" height="738"/>
-      <rect x="460" y="0" width="249" height="738"/>
-      <rect x="300" y="0" width="160" height="90"/>
-      <rect x="300" y="250" width="160" height="488"/>
-      <rect x="440" y="0" width="40" height="738"/>
+      <!-- window around the head (allow extra margin for rotation) -->
+      <rect x="0" y="0" width="285" height="738"/>
+      <rect x="515" y="0" width="194" height="738"/>
+      <rect x="285" y="0" width="230" height="80"/>
+      <rect x="285" y="310" width="230" height="428"/>
     </g></mask>
     <mask id="maskNeck"><use href="#crowSil"/><g fill="black">
       <!-- window around neck below head -->
-      <rect x="0" y="0" width="260" height="738"/>
-      <rect x="360" y="0" width="349" height="738"/>
-      <rect x="260" y="0" width="100" height="220"/>
-      <rect x="260" y="340" width="100" height="398"/>
+      <rect x="0" y="0" width="250" height="738"/>
+      <rect x="390" y="0" width="319" height="738"/>
+      <rect x="250" y="0" width="140" height="170"/>
+      <rect x="250" y="360" width="140" height="378"/>
     </g></mask>
     <mask id="maskNeckMid"><use href="#crowSil"/><g fill="black">
       <!-- narrower intermediate neck segment for smoother head coupling -->
-      <rect x="0" y="0" width="280" height="738"/>
-      <rect x="340" y="0" width="369" height="738"/>
-      <rect x="280" y="0" width="60" height="240"/>
-      <rect x="280" y="320" width="60" height="418"/>
+      <rect x="0" y="0" width="270" height="738"/>
+      <rect x="380" y="0" width="329" height="738"/>
+      <rect x="270" y="0" width="110" height="200"/>
+      <rect x="270" y="340" width="110" height="398"/>
     </g></mask>
     <mask id="maskWing"><use href="#crowSil"/><g fill="black">
       <!-- broad window for the wing area on the torso -->
@@ -133,25 +132,30 @@
 
   <g id="Crow" class="rig" data-anim-role="crow">
     <g id="Body" class="part body" mask="url(#maskBody)"><use href="#crowPNG"/></g>
-    <!-- New segments: Wing container, Neck, Head -->
+    <!-- Wing + articulated neck/head assembly -->
     <g id="Wing" class="part wing" data-anim-role="wing">
       <g id="WingA" class="feather" mask="url(#maskWingA)"><use href="#crowPNG"/></g>
       <g id="WingB" class="feather" mask="url(#maskWingB)"><use href="#crowPNG"/></g>
       <g id="WingC" class="feather" mask="url(#maskWingC)"><use href="#crowPNG"/></g>
     </g>
-    <g id="Neck" class="part neck" mask="url(#maskNeck)"><use href="#crowPNG"/></g>
-    <g id="NeckMid" class="part neck" mask="url(#maskNeckMid)"><use href="#crowPNG"/></g>
-    <g id="Head" class="part head" mask="url(#maskHead)">
-      <use href="#crowPNG"/>
-      <!-- Eyelids overlayed and clipped to silhouette; nested so they follow head transforms -->
-      <g id="Eyelids" class="part eyelids" mask="url(#silMask)">
-        <rect id="EyelidUpper" x="330" y="122" width="82" height="28" rx="14" ry="14" fill="#000"/>
-        <rect id="EyelidLower" x="330" y="150" width="82" height="28" rx="14" ry="14" fill="#000"/>
+    <g id="NeckBase" class="part neck base" style="transform-origin: 312px 221px;">
+      <g id="Neck" class="part neck" mask="url(#maskNeck)" style="transform-origin: 312px 221px;"><use href="#crowPNG"/></g>
+      <g id="NeckMid" class="part neck" mask="url(#maskNeckMid)" style="transform-origin: 312px 192px;"><use href="#crowPNG"/></g>
+      <g id="NeckUpper" class="part neck upper" style="transform-origin: 312px 192px;">
+        <g id="HeadSkull" class="part headSkull" mask="url(#maskHead)" style="transform-origin: 425px 170px;">
+          <g id="Head" class="part head">
+            <use href="#crowPNG"/>
+            <g id="Eyelids" class="part eyelids" mask="url(#silMask)">
+              <path id="EyelidUpper" d="M 324 150 Q 371 118 418 150 L 418 140 Q 371 108 324 140 Z" fill="#000" opacity="0"/>
+              <path id="EyelidLower" d="M 324 150 Q 371 182 418 150 L 418 160 Q 371 192 324 160 Z" fill="#000" opacity="0"/>
+            </g>
+          </g>
+        </g>
+        <!-- Separated beak parts for caw animation -->
+        <g id="BeakUpper" class="part beak upper" mask="url(#maskBeakUpper)" style="transform-origin: 425px 170px;"><use href="#crowPNG"/></g>
+        <g id="BeakLower" class="part beak lower" mask="url(#maskBeakLower)" style="transform-origin: 432px 192px;"><use href="#crowPNG"/></g>
       </g>
     </g>
-    <!-- Separated beak parts for caw animation -->
-    <g id="BeakUpper" class="part beak upper" mask="url(#maskBeakUpper)"><use href="#crowPNG"/></g>
-    <g id="BeakLower" class="part beak lower" mask="url(#maskBeakLower)"><use href="#crowPNG"/></g>
     <g id="Tail" class="part tail" data-anim-role="tail">
       <g id="TailA" class="feather" mask="url(#maskTailA)"><use href="#crowPNG"/></g>
       <g id="TailB" class="feather" mask="url(#maskTailB)"><use href="#crowPNG"/></g>
@@ -181,8 +185,8 @@
     @keyframes hop     { 0%,100% { transform: translateY(0) } 30% { transform: translateY(-22px) } 60% { transform: translateY(-8px) } }
     @keyframes shadow  { 0%,100% { transform: scale(1); opacity: .35 } 30% { transform: scale(.82); opacity: .18 } 60% { transform: scale(.92); opacity: .26 } }
     @keyframes cawTilt { 0%,100% { transform: rotate(0deg) } 30% { transform: rotate(-6deg) } 60% { transform: rotate(-2deg) } }
-    @keyframes blinkU { 0%,100% { transform: scaleY(0) } 40% { transform: scaleY(1) } }
-    @keyframes blinkL { 0%,100% { transform: scaleY(0) } 40% { transform: scaleY(1) } }
+    @keyframes blinkU { 0%,92%,100% { transform: translateY(0) } 45% { transform: translateY(14px) } 60% { transform: translateY(0) } }
+    @keyframes blinkL { 0%,92%,100% { transform: translateY(0) } 45% { transform: translateY(-14px) } 60% { transform: translateY(0) } }
     @keyframes beakOpen { 0%,100% { transform: rotate(0deg) } 35% { transform: rotate(-16deg) } 65% { transform: rotate(-6deg) } }
     @keyframes beakLower { 0%,100% { transform: rotate(0deg) } 35% { transform: rotate(14deg) } 65% { transform: rotate(5deg) } }
 
@@ -191,9 +195,9 @@
     .animate-headBob #Head{ animation: headBob 1.2s ease-in-out 1; }
     .animate-headBob:not(.has-head) #Body{ animation: headBob 1.2s ease-in-out 1; }
     /* Blink using eyelids */
-    #EyelidUpper, #EyelidLower{ transform-box: fill-box; opacity: 0 }
-    #EyelidUpper{ transform-origin: center bottom; transform: scaleY(0) }
-    #EyelidLower{ transform-origin: center top; transform: scaleY(0) }
+    #EyelidUpper, #EyelidLower{ transform-box: fill-box; opacity: 0; transform: translateY(0); }
+    #EyelidUpper{ transform-origin: 50% 50%; }
+    #EyelidLower{ transform-origin: 50% 50%; }
     .animate-blink  #EyelidUpper{ opacity:1; animation: blinkU 0.24s ease-in-out 1; }
     .animate-blink  #EyelidLower{ opacity:1; animation: blinkL 0.24s ease-in-out 1; }
     /* Preen (prefer wing rotation; fallback tail wiggle) */
@@ -206,8 +210,8 @@
     .animate-hop    #Crow{ animation: hop 0.9s cubic-bezier(.3,.6,.3,1) 1; }
     .animate-hop    #Shadow{ transform-origin: 355px 700px; animation: shadow 0.9s cubic-bezier(.3,.6,.3,1) 1; }
     /* Caw cycle (beak open/close + light body tilt) */
-    .animate-caw    #BeakUpper{ transform-origin: 480px 190px; animation: beakOpen 0.6s ease-in-out 1; }
-    .animate-caw    #BeakLower{ transform-origin: 480px 210px; animation: beakLower 0.6s ease-in-out 1; }
+    .animate-caw    #BeakUpper{ transform-origin: 425px 170px; animation: beakOpen 0.6s ease-in-out 1; }
+    .animate-caw    #BeakLower{ transform-origin: 432px 192px; animation: beakLower 0.6s ease-in-out 1; }
     .animate-caw    #Body{ transform-origin: 360px 360px; animation: cawTilt 0.6s ease-in-out 1; }
   </style>
 </svg>

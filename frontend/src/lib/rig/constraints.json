@@ -1,13 +1,13 @@
 {
   "pitch": {
-    "NeckBase": [-6, 6],
-    "NeckMid": [-8, 8],
-    "NeckUpper": [-12, 12],
+    "NeckBase": [-8, 8],
+    "NeckMid": [-12, 12],
+    "NeckUpper": [-16, 12],
 
-    "HeadSkull": [-15, 10],
-    "HeadSkullRoll": [-6, 6],
-    "BeakUpper": [-15, 10],
-    "BeakLower": [0, 45],
+    "HeadSkull": [-18, 12],
+    "HeadSkullRoll": [-8, 8],
+    "BeakUpper": [-18, 12],
+    "BeakLower": [0, 52],
 
     "Shoulder": [-30, 70],
     "Elbow": [0, 80],
@@ -33,10 +33,11 @@
   "actions": {
     "caw": {
       "pitch": {
-        "HeadSkull": [-15, 10],
-        "BeakUpper": [-15, 10],
-        "BeakLower": [0, 45],
-        "NeckUpper": [-12, 12]
+        "HeadSkull": [-14, 6],
+        "BeakUpper": [-14, 6],
+        "BeakLower": [0, 40],
+        "NeckUpper": [-10, 8],
+        "NeckBase": [-6, 4]
       }
     },
     "preen": {

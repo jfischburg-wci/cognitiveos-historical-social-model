@@ -3,13 +3,13 @@
   "bones": [
     {"id":"Crow",        "parent":null},
 
-    {"id":"NeckBase",    "parent":"Crow",      "pivot":{"rel":[0.44,0.30]}, "dof":{"pitch":[-6,6]}},
-    {"id":"NeckMid",     "parent":"NeckBase",  "pivot":{"rel":[0.44,0.26]}, "dof":{"pitch":[-8,8]}},
-    {"id":"NeckUpper",   "parent":"NeckMid",   "pivot":{"rel":[0.44,0.26]}, "dof":{"pitch":[-12,12]}},
+    {"id":"NeckBase",    "parent":"Crow",      "pivot":{"px":[312,221]}, "dof":{"pitch":[-8,8]}},
+    {"id":"NeckMid",     "parent":"NeckBase",  "pivot":{"px":[312,192]}, "dof":{"pitch":[-12,12]}},
+    {"id":"NeckUpper",   "parent":"NeckMid",   "pivot":{"px":[312,192]}, "dof":{"pitch":[-16,12]}},
 
-    {"id":"HeadSkull",   "parent":"NeckUpper", "pivot":{"rel":[0.60,0.23]}, "dof":{"pitch":[-15,10]}, "alias":"Head"},
-    {"id":"BeakUpper",   "parent":"NeckUpper", "pivot":{"rel":[0.60,0.23]}, "dof":{"pitch":[-15,10]}, "alias":"BeakUpper"},
-    {"id":"BeakLower",   "parent":"NeckUpper", "pivot":{"rel":[0.61,0.26]}, "dof":{"pitch":[0,45]},   "alias":"BeakLower"},
+    {"id":"HeadSkull",   "parent":"NeckUpper", "pivot":{"px":[425,170]}, "dof":{"pitch":[-18,12]}, "alias":"Head"},
+    {"id":"BeakUpper",   "parent":"NeckUpper", "pivot":{"px":[425,170]}, "dof":{"pitch":[-18,12]}, "alias":"BeakUpper"},
+    {"id":"BeakLower",   "parent":"NeckUpper", "pivot":{"px":[432,192]}, "dof":{"pitch":[0,52]},   "alias":"BeakLower"},
 
     {"id":"TailBase",    "parent":"Crow",      "pivot":{"rel":[0.19,0.62]}, "dof":{"pitch":[-12,12]}, "alias":"Tail"},
 
@@ -31,6 +31,6 @@
     {"id":"TailB",       "parent":"TailBase",  "pivot":{"rel":[0.19,0.62]}, "dof":{"pitch":[-4,4]},     "alias":"TailB"},
     {"id":"TailC",       "parent":"TailBase",  "pivot":{"rel":[0.19,0.62]}, "dof":{"pitch":[-4,4]},     "alias":"TailC"},
     {"id":"TailD",       "parent":"TailBase",  "pivot":{"rel":[0.19,0.62]}, "dof":{"pitch":[-4,4]},     "alias":"TailD"},
-    {"id":"HeadSkullRoll", "parent":"NeckUpper", "pivot":{"rel":[0.60,0.23]}, "dof":{"pitch":[-6,6]}, "alias":"HeadSkull"}
+    {"id":"HeadSkullRoll", "parent":"NeckUpper", "pivot":{"px":[425,170]}, "dof":{"pitch":[-8,8]}, "alias":"HeadSkull"}
   ]
 }

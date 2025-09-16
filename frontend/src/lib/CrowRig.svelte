@@ -127,6 +127,11 @@
     if (!head || !bu) return;
     if (svg.getElementById('HeadUpper')) return; // already wrapped
 
+    const headSkull = svg.getElementById('HeadSkull');
+    const neckUpper = svg.getElementById('NeckUpper');
+    const modernLayout = headSkull && neckUpper && head.parentNode === headSkull && bu.parentNode === neckUpper;
+    if (modernLayout) return; // new segmented SVG already provides dedicated wrappers
+
     const parent = head.parentNode; // expected Crow group
     const group = document.createElementNS('http://www.w3.org/2000/svg','g');
     group.setAttribute('id','HeadUpper');
@@ -382,6 +387,7 @@
     const WINGA= { x: WING.x,         y: WING.y };
     const WINGB= { x: vb.width*0.40, y: vb.height*0.38 };
     const WINGC= { x: vb.width*0.48, y: vb.height*0.41 };
+    const NECKB= { x: vb.width*0.44, y: vb.height*0.30 };
     const NECKM= { x: vb.width*0.44, y: vb.height*0.26 };
     const BU   = { x: vb.width*0.60, y: vb.height*0.23 };
     const BL   = { x: vb.width*0.61, y: vb.height*0.26 };
@@ -392,6 +398,8 @@
     setOrigin('Head', HEAD.x, HEAD.y);
     // Legacy hints (skeleton sets proper pivots already)
     setOrigin('HeadSkull', BU.x, BU.y);
+    setOrigin('NeckBase', NECKB.x, NECKB.y);
+    setOrigin('Neck', NECKB.x, NECKB.y);
     setOrigin('NeckUpper', NECKM.x, NECKM.y);
     setOrigin('HeadUpper', BU.x, BU.y);
     setOrigin('Wing',  WING.x,  WING.y);
@@ -422,23 +430,33 @@
     // Ensure eyelids only: in-head, clipped, and animated via translate toward center
     up.style.transformBox = 'fill-box';
     lo.style.transformBox = 'fill-box';
+    up.style.transform = 'translateY(0px)';
+    lo.style.transform = 'translateY(0px)';
     // Don't rely on scale; slide lids toward the eye line and slightly overlap to avoid a sliver
     up.style.opacity = '1';
     lo.style.opacity = '1';
 
-    // Distances tuned to the SVG geometry (each rect is 28px tall, stacked to meet at y=150)
-    const d = 14;       // half-lid travel toward the center line
-    const overlap = 1;  // 1px overlap at closure to avoid anti-aliased gap
+    // Compute travel based on eyelid geometry so exports with different scaling still close cleanly
+    const box = (node) => {
+      try { return typeof node.getBBox === 'function' ? node.getBBox() : null; } catch { return null; }
+    };
+    const upBox = box(up);
+    const loBox = box(lo);
+    const gap = (upBox && loBox) ? Math.max(0, loBox.y - (upBox.y + upBox.height)) : 28;
+    const baseTravel = gap > 0 ? gap / 2 : 14;
+    const overlap = Math.min(2.4, Math.max(0.8, baseTravel * 0.2));
+    const upTravel = baseTravel + overlap;
+    const loTravel = baseTravel + overlap;
 
     const kfU = [
-      { transform: `translateY(${-d}px)` },
-      { transform: `translateY(${overlap}px)` },
-      { transform: `translateY(${-d}px)` }
+      { transform: 'translateY(0px)' },
+      { transform: `translateY(${upTravel}px)` },
+      { transform: 'translateY(0px)' }
     ];
     const kfL = [
-      { transform: `translateY(${d}px)` },
-      { transform: `translateY(${-overlap}px)` },
-      { transform: `translateY(${d}px)` }
+      { transform: 'translateY(0px)' },
+      { transform: `translateY(${-loTravel}px)` },
+      { transform: 'translateY(0px)' }
     ];
 
     // Fast close, slight hold, natural open
@@ -465,6 +483,7 @@
       // Clear any residual transform to ensure clean neutral state
       up.style.transform = '';
       lo.style.transform = '';
+      dispatch('interact');
     });
   }
 
@@ -709,10 +728,12 @@
       const bu = svg?.getElementById('BeakUpper');
       const bl = svg?.getElementById('BeakLower');
       const nu = svg?.getElementById('NeckUpper') || svg?.getElementById('NeckMid');
+      const nb = svg?.getElementById('NeckBase');
       if (hu) hu.style.transform = 'rotate(0deg)';
       if (bu) bu.style.transform = 'rotate(0deg)';
       if (bl) bl.style.transform = 'rotate(0deg)';
       if (nu) nu.style.transform = 'translate(0px, 0px) rotate(0deg)';
+      if (nb) nb.style.transform = 'rotate(0deg)';
       const up = svg?.getElementById('EyelidUpper');
       const lo = svg?.getElementById('EyelidLower');
       if (up) { up.style.opacity = '0'; up.style.transform = ''; }
