@@ -623,10 +623,23 @@
     const toeR  = svg.getElementById('ToesRight')  || svg.getElementById('FootRight');
     if (!crow) return Promise.resolve();
     const dur = 900;
+
+    // Horizontal advance accumulator so successive hops move forward
+    if (typeof hop.baseX !== 'number') hop.baseX = 0;
+    const dx = 80; // visible forward motion per hop
+    const x0 = hop.baseX;
+    const x1 = x0 + dx;
+    // Ensure baseline translation is applied before animating
+    crow.style.transform = `translate(${x0}px, 0px)`;
     crow.animate(
-      [{ transform:'translateY(0)' }, { transform:'translateY(-20px)' }, { transform:'translateY(-8px)' }, { transform:'translateY(0)' }],
+      [
+        { transform:`translate(${x0}px, 0px)` },
+        { transform:`translate(${x0 + dx*0.5}px, -20px)` },
+        { transform:`translate(${x1}px, -8px)` },
+        { transform:`translate(${x1}px, 0px)` }
+      ],
       { duration: dur, easing:'cubic-bezier(.3,.6,.3,1)', fill:'none' }
-    );
+    ).finished.then(() => { hop.baseX = x1; crow.style.transform = `translate(${hop.baseX}px, 0px)`; }).catch(()=>{});
     feet.forEach(f => f.animate(
       [{ transform:'rotate(0deg)' }, { transform:'rotate(8deg)' }, { transform:'rotate(0deg)' }],
       { duration: 400, easing:'ease-out', fill:'none' }
@@ -741,13 +754,19 @@
     const anklR = svg.getElementById('AnkleRight') || svg.getElementById('FootRight');
     const toeR  = svg.getElementById('ToesRight')  || svg.getElementById('FootRight');
     if (!crow || !head) return Promise.resolve();
+    // Horizontal advance accumulator
+    if (typeof walk.baseX !== 'number') walk.baseX = 0;
+    const stepDist = 160; // greater forward motion so the walk is visible
+    const x0 = walk.baseX;
+    const x1 = x0 + stepDist;
+    crow.style.transform = `translate(${x0}px, 0px)`;
     crow.animate(
       [
-        { transform: 'translateX(0px)' },
-        { transform: 'translateX(32px)' }
+        { transform: `translate(${x0}px, 0px)` },
+        { transform: `translate(${x1}px, 0px)` }
       ],
       { duration: 600, easing: 'steps(2,end)', fill: 'none' }
-    );
+    ).finished.then(() => { walk.baseX = x1; crow.style.transform = `translate(${walk.baseX}px, 0px)`; }).catch(()=>{});
     head.animate(
       [
         { transform: 'translateY(0px)' },
