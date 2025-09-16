@@ -391,6 +391,7 @@
     const NECKM= { x: vb.width*0.44, y: vb.height*0.26 };
     const BU   = { x: vb.width*0.60, y: vb.height*0.23 };
     const BL   = { x: vb.width*0.61, y: vb.height*0.26 };
+    const EYE  = { x: vb.width*0.523, y: vb.height*0.205 };
     const TAIL = { x: vb.width*0.19, y: vb.height*0.62 };
     const LFOOT= { x: vb.width*0.37, y: vb.height*0.82 };
     const RFOOT= { x: vb.width*0.49, y: vb.height*0.82 };
@@ -398,6 +399,7 @@
     setOrigin('Head', HEAD.x, HEAD.y);
     // Legacy hints (skeleton sets proper pivots already)
     setOrigin('HeadSkull', BU.x, BU.y);
+    setOrigin('SkullTop', BU.x, BU.y);
     setOrigin('NeckBase', NECKB.x, NECKB.y);
     setOrigin('Neck', NECKB.x, NECKB.y);
     setOrigin('NeckUpper', NECKM.x, NECKM.y);
@@ -409,12 +411,14 @@
     setOrigin('NeckMid', NECKM.x, NECKM.y);
     setOrigin('BeakUpper', BU.x, BU.y);
     setOrigin('BeakLower', BL.x, BL.y);
+    setOrigin('EyelidUpper', EYE.x, EYE.y);
+    setOrigin('EyelidLower', EYE.x, EYE.y + 6);
     ['TailA','TailB','TailC','TailD'].forEach(id => setOrigin(id, TAIL.x, TAIL.y));
     setOrigin('FootLeft',  LFOOT.x, LFOOT.y);
     setOrigin('FootRight', RFOOT.x, RFOOT.y);
 
     // Hint to engines that these nodes will animate transforms
-    ['Crow','Head','HeadSkull','NeckBase','NeckUpper','HeadUpper','NeckMid','Shoulder','Elbow','Wrist','Primaries','TailBase','HipLeft','KneeLeft','AnkleLeft','ToesLeft','HipRight','KneeRight','AnkleRight','ToesRight','Wing','WingA','WingB','WingC','BeakUpper','BeakLower','TailA','TailB','TailC','TailD','Legs','Feet','FootLeft','FootRight']
+    ['Crow','Head','HeadSkull','SkullTop','NeckBase','NeckUpper','HeadUpper','NeckMid','Shoulder','Elbow','Wrist','Primaries','TailBase','HipLeft','KneeLeft','AnkleLeft','ToesLeft','HipRight','KneeRight','AnkleRight','ToesRight','Wing','WingA','WingB','WingC','BeakUpper','BeakLower','EyelidUpper','EyelidLower','TailA','TailB','TailC','TailD','Legs','Feet','FootLeft','FootRight']
       .forEach(id => { const el = svg.getElementById(id); if (el) el.style.willChange = 'transform'; });
   }
 
@@ -426,6 +430,8 @@
     const up = svg.getElementById('EyelidUpper');
     const lo = svg.getElementById('EyelidLower');
     if (!up || !lo) return Promise.resolve();
+    const upUnder = svg.getElementById('EyelidUpperUnderlay');
+    const loUnder = svg.getElementById('EyelidLowerUnderlay');
 
     // Ensure eyelids only: in-head, clipped, and animated via translate toward center
     up.style.transformBox = 'fill-box';
@@ -435,6 +441,8 @@
     // Don't rely on scale; slide lids toward the eye line and slightly overlap to avoid a sliver
     up.style.opacity = '1';
     lo.style.opacity = '1';
+    if (upUnder) upUnder.style.opacity = '1';
+    if (loUnder) loUnder.style.opacity = '1';
 
     // Compute travel based on eyelid geometry so exports with different scaling still close cleanly
     const box = (node) => {
@@ -480,6 +488,8 @@
       // Hide eyelids again (neutral)
       up.style.opacity = '0';
       lo.style.opacity = '0';
+      if (upUnder) upUnder.style.opacity = '0';
+      if (loUnder) loUnder.style.opacity = '0';
       // Clear any residual transform to ensure clean neutral state
       up.style.transform = '';
       lo.style.transform = '';
@@ -489,27 +499,54 @@
 
   function headBob(){
     const head = svg.getElementById('Head');
+    const skull = svg.getElementById('HeadSkull');
+    const skullTop = svg.getElementById('SkullTop');
+    const neckB = svg.getElementById('NeckBase');
     const neckm = svg.getElementById('NeckMid');
     const neckU = svg.getElementById('NeckUpper');
     const tailB = svg.getElementById('TailBase');
     if (!head) return Promise.resolve();
-    const aH = head.animate(
-      [{ transform:'translateY(0) rotate(0deg)' },
-       { transform:'translateY(6px) rotate(-2deg)' },
-       { transform:'translateY(0) rotate(0deg)' }],
-      { duration: 900, easing:'cubic-bezier(.3,.6,.3,1)', fill:'none' }
-    );
-    const aN  = neckm ? animateBone('NeckMid',   'NeckMid',   [
-      { transform:'rotate(0deg)' }, { transform:'rotate(-1deg)' }, { transform:'rotate(0deg)' }
-    ], { duration: 900, easing:'cubic-bezier(.3,.6,.3,1)', fill:'none' }, 'headBob') : null;
-    const aNU = neckU ? animateBone('NeckUpper', 'NeckUpper', [
-      { transform:'rotate(0deg)' }, { transform:'rotate(-0.8deg)' }, { transform:'rotate(0deg)' }
-    ], { duration: 900, easing:'cubic-bezier(.3,.6,.3,1)', fill:'none' }, 'headBob') : null;
-    const aT = tailB ? tailB.animate(
-      [{ transform:'rotate(0deg)' }, { transform:'rotate(2deg)' }, { transform:'rotate(0deg)' }],
-      { duration: 900, easing:'cubic-bezier(.3,.6,.3,1)', fill:'none' }
-    ) : null;
-    return Promise.all([aH.finished, aN?.finished ?? Promise.resolve(), aNU?.finished ?? Promise.resolve(), aT?.finished ?? Promise.resolve()]).then(()=>{});
+    const dur = 900;
+    const ease = 'cubic-bezier(.3,.6,.3,1)';
+    const promises = [];
+    promises.push(head.animate(
+      [
+        { transform:'translateY(0px) rotate(0deg)' },
+        { transform:'translateY(6px) rotate(-1deg)' },
+        { transform:'translateY(0px) rotate(0deg)' }
+      ],
+      { duration: dur, easing: ease, fill: 'none' }
+    ).finished);
+    if (neckB) promises.push(animateBone('NeckBase','NeckBase',[
+      { transform:'rotate(0deg)' },
+      { transform:'rotate(-2deg)' },
+      { transform:'rotate(0deg)' }
+    ], { duration: dur, easing: ease, fill:'none' }, 'headBob')?.finished ?? Promise.resolve());
+    if (neckm) promises.push(animateBone('NeckMid','NeckMid',[
+      { transform:'rotate(0deg)' },
+      { transform:'rotate(-3deg)' },
+      { transform:'rotate(0deg)' }
+    ], { duration: dur, easing: ease, fill:'none' }, 'headBob')?.finished ?? Promise.resolve());
+    if (neckU) promises.push(animateBone('NeckUpper','NeckUpper',[
+      { transform:'rotate(0deg)' },
+      { transform:'rotate(-4.5deg)' },
+      { transform:'rotate(0deg)' }
+    ], { duration: dur, easing: ease, fill:'none' }, 'headBob')?.finished ?? Promise.resolve());
+    if (skull) promises.push(animateBone(skull.id || 'HeadSkull','HeadSkull',[
+      { transform:'rotate(0deg)' },
+      { transform:'rotate(-4deg)' },
+      { transform:'rotate(0deg)' }
+    ], { duration: dur, easing: ease, fill:'none' }, 'headBob')?.finished ?? Promise.resolve());
+    if (skullTop) promises.push(animateBone('SkullTop','SkullTop',[
+      { transform:'rotate(0deg)' },
+      { transform:'rotate(-5.5deg)' },
+      { transform:'rotate(0deg)' }
+    ], { duration: dur, easing: ease, fill:'none' }, 'headBob')?.finished ?? Promise.resolve());
+    if (tailB) promises.push(tailB.animate(
+      [ { transform:'rotate(0deg)' }, { transform:'rotate(2deg)' }, { transform:'rotate(0deg)' } ],
+      { duration: dur, easing: ease, fill:'none' }
+    ).finished);
+    return Promise.all(promises).then(()=>{});
   }
 
   function preen(){
@@ -518,36 +555,50 @@
     const elbow    = svg.getElementById('Elbow')    || svg.getElementById('WingB');
     const wrist    = svg.getElementById('Wrist')    || svg.getElementById('WingC');
     const prim     = svg.getElementById('Primaries');
+    const skull    = svg.getElementById('HeadSkull');
+    const skullTop = svg.getElementById('SkullTop');
+    const neckU    = svg.getElementById('NeckUpper');
     const tails = ['TailA','TailB','TailC','TailD'].map(id=>svg.getElementById(id)).filter(Boolean);
     const tailB = svg.getElementById('TailBase');
     if (!shoulder) return Promise.resolve();
     const dur = 1600;
-    animateBone(shoulder?.id || 'Shoulder', 'Shoulder', [
+    const ease = 'ease-in-out';
+    const promises = [];
+    promises.push(animateBone(shoulder?.id || 'Shoulder', 'Shoulder', [
       { transform:'rotate(0deg)' },
       { transform:'rotate(-6deg)' },
       { transform:'rotate(3deg)'  },
       { transform:'rotate(0deg)' }
-    ], { duration: dur, easing:'ease-in-out', fill:'none' }, 'preen');
-    if (elbow) animateBone(elbow.id, 'Elbow', [
+    ], { duration: dur, easing:ease, fill:'none' }, 'preen')?.finished ?? Promise.resolve());
+    if (elbow) promises.push(animateBone(elbow.id, 'Elbow', [
       { transform:'rotate(0deg)' }, { transform:'rotate(-3deg)' }, { transform:'rotate(1.5deg)' }, { transform:'rotate(0deg)' }
-    ], { duration: dur, delay: 100, easing:'ease-in-out', fill:'none' }, 'preen');
-    if (wrist) animateBone(wrist.id, 'Wrist', [
+    ], { duration: dur, delay: 100, easing:ease, fill:'none' }, 'preen')?.finished ?? Promise.resolve());
+    if (wrist) promises.push(animateBone(wrist.id, 'Wrist', [
       { transform:'rotate(0deg)' }, { transform:'rotate(-2deg)' }, { transform:'rotate(1deg)' }, { transform:'rotate(0deg)' }
-    ], { duration: dur, delay: 140, easing:'ease-in-out', fill:'none' }, 'preen');
-    if (prim) animateBone(prim.id, 'Primaries', [
+    ], { duration: dur, delay: 140, easing:ease, fill:'none' }, 'preen')?.finished ?? Promise.resolve());
+    if (prim) promises.push(animateBone(prim.id, 'Primaries', [
       { transform:'rotate(0deg)' }, { transform:'rotate(-1.2deg)' }, { transform:'rotate(0.6deg)' }, { transform:'rotate(0deg)' }
-    ], { duration: dur, delay: 180, easing:'ease-in-out', fill:'none' }, 'preen');
-    if (tailB) tailB.animate(
+    ], { duration: dur, delay: 180, easing:ease, fill:'none' }, 'preen')?.finished ?? Promise.resolve());
+    if (neckU) promises.push(animateBone('NeckUpper','NeckUpper',[
+      { transform:'rotate(0deg)' }, { transform:'rotate(-4deg)' }, { transform:'rotate(-1deg)' }, { transform:'rotate(0deg)' }
+    ], { duration: dur, delay: 80, easing:ease, fill:'none' }, 'preen')?.finished ?? Promise.resolve());
+    if (skull) promises.push(animateBone(skull.id || 'HeadSkull','HeadSkull',[
+      { transform:'rotate(0deg)' }, { transform:'rotate(-4deg)' }, { transform:'rotate(-1deg)' }, { transform:'rotate(0deg)' }
+    ], { duration: dur, delay: 120, easing:ease, fill:'none' }, 'preen')?.finished ?? Promise.resolve());
+    if (skullTop) promises.push(animateBone('SkullTop','SkullTop',[
+      { transform:'rotate(0deg)' }, { transform:'rotate(-5deg)' }, { transform:'rotate(-1.5deg)' }, { transform:'rotate(0deg)' }
+    ], { duration: dur, delay: 160, easing:ease, fill:'none' }, 'preen')?.finished ?? Promise.resolve());
+    if (tailB) promises.push(tailB.animate(
       [{ transform:'rotate(0deg)' }, { transform:'rotate(2.4deg)' }, { transform:'rotate(0deg)' }],
-      { duration: 1200, delay: 120, easing:'ease-in-out', fill:'none' }
-    );
+      { duration: 1200, delay: 120, easing:ease, fill:'none' }
+    ).finished);
     tails.forEach((t,i)=>{
-      t.animate(
+      promises.push(t.animate(
         [{ transform:'rotate(0deg)' }, { transform:`rotate(${i%2?2:-2}deg)` }, { transform:'rotate(0deg)' }],
-        { duration: 1200, delay: i*60, easing:'ease-in-out', fill:'none' }
-      );
+        { duration: 1200, delay: i*60, easing:ease, fill:'none' }
+      ).finished);
     });
-    return Promise.resolve();
+    return Promise.all(promises).then(()=>{});
   }
 
   function hop(){
@@ -556,6 +607,9 @@
     const shoulder = svg.getElementById('Shoulder') || svg.getElementById('Wing');
     const elbow    = svg.getElementById('Elbow')    || svg.getElementById('WingB');
     const wrist    = svg.getElementById('Wrist')    || svg.getElementById('WingC');
+    const neckU    = svg.getElementById('NeckUpper') || svg.getElementById('NeckMid');
+    const skull    = svg.getElementById('HeadSkull');
+    const skullTop = svg.getElementById('SkullTop');
     const tailB    = svg.getElementById('TailBase');
     const tails    = ['TailA','TailB','TailC','TailD'].map(id=>svg.getElementById(id)).filter(Boolean);
     // Legs (prefer bones, fall back to legacy groups)
@@ -588,6 +642,15 @@
     if (wrist)    animateBone(wrist.id, 'Wrist', [
       { transform:'rotate(0deg)' }, { transform:'rotate(-3deg)' }, { transform:'rotate(-1deg)' }, { transform:'rotate(0deg)' }
     ], { duration: dur, delay: 100, easing: wEase, fill:'none' }, 'hop');
+    if (neckU)    animateBone(neckU.id || 'NeckUpper', 'NeckUpper', [
+      { transform:'rotate(0deg)' }, { transform:'rotate(-4deg)' }, { transform:'rotate(0deg)' }
+    ], { duration: dur, delay: 90, easing: wEase, fill:'none' }, 'hop');
+    if (skull)    animateBone(skull.id || 'HeadSkull', 'HeadSkull', [
+      { transform:'rotate(0deg)' }, { transform:'rotate(-4deg)' }, { transform:'rotate(0deg)' }
+    ], { duration: dur, delay: 110, easing: wEase, fill:'none' }, 'hop');
+    if (skullTop) animateBone('SkullTop', 'SkullTop', [
+      { transform:'rotate(0deg)' }, { transform:'rotate(-5deg)' }, { transform:'rotate(0deg)' }
+    ], { duration: dur, delay: 110, easing: wEase, fill:'none' }, 'hop');
     if (tailB) tailB.animate(
       [{ transform:'rotate(0deg)' }, { transform:'rotate(3deg)' }, { transform:'rotate(0deg)' }],
       { duration: dur, delay: 60, easing: wEase, fill:'none' }
@@ -620,15 +683,33 @@
 
   function caw(){
     const skull = svg.getElementById('HeadSkull') || svg.getElementById('HeadUpper') || svg.getElementById('Head');
+    const skullTop = svg.getElementById('SkullTop');
     const up    = svg.getElementById('BeakUpper');
     const lo    = svg.getElementById('BeakLower');
+    const neckB = svg.getElementById('NeckBase');
     const neckU = svg.getElementById('NeckUpper') || svg.getElementById('NeckMid');
     if (!lo) return Promise.resolve();
 
-    const durJaw = 200;
+    const durJaw = 210;
     const ease   = 'cubic-bezier(.2,.8,.2,1)';
+    const headEase = 'cubic-bezier(.3,.6,.3,1)';
     const anims = [];
+    if (neckB) anims.push(animateBone('NeckBase','NeckBase',[
+      { transform:'rotate(0deg)' },
+      { transform:'rotate(-4deg)' },
+      { transform:'rotate(0deg)' }
+    ], { duration: durJaw + 120, easing: headEase, fill:'none' }, 'caw')?.finished);
+    if (neckU) anims.push(animateBone(neckU.id || 'NeckUpper', 'NeckUpper', [
+      { transform:'translate(0px, 0px) rotate(0deg)' },
+      { transform:'translate(2.2px, -4px) rotate(-8deg)' },
+      { transform:'translate(0px, 0px) rotate(0deg)' }
+    ], { duration: durJaw + 140, easing: headEase, fill:'none' }, 'caw')?.finished);
     if (skull) anims.push(animateBone(skull.id || 'HeadSkull', 'HeadSkull', [
+      { transform:'rotate(0deg)' },
+      { transform:'rotate(-9deg)' },
+      { transform:'rotate(0deg)' }
+    ], { duration: durJaw, easing: ease, fill:'none' }, 'caw')?.finished);
+    if (skullTop) anims.push(animateBone('SkullTop', 'SkullTop', [
       { transform:'rotate(0deg)' },
       { transform:'rotate(-12deg)' },
       { transform:'rotate(0deg)' }
@@ -640,14 +721,9 @@
     ], { duration: durJaw, easing: ease, fill:'none' }, 'caw')?.finished);
     anims.push(animateBone(lo.id, 'BeakLower', [
       { transform:'rotate(0deg)' },
-      { transform:'rotate(32deg)' },
+      { transform:'rotate(34deg)' },
       { transform:'rotate(0deg)' }
     ], { duration: durJaw, easing: ease, fill:'none' }, 'caw')?.finished);
-    if (neckU) anims.push(animateBone(neckU.id || 'NeckUpper', 'NeckUpper', [
-      { transform:'translate(0px, 0px) rotate(0deg)' },
-      { transform:'translate(2px, -3px) rotate(-8deg)' },
-      { transform:'translate(0px, 0px) rotate(0deg)' }
-    ], { duration: durJaw + 140, easing:'cubic-bezier(.3,.6,.3,1)', fill:'none' }, 'caw')?.finished);
 
     return Promise.all(anims).then(()=>{});
   }
@@ -655,6 +731,9 @@
   function walk(){
     const crow = svg.getElementById('Crow');
     const head = svg.getElementById('Head');
+    const skull = svg.getElementById('HeadSkull');
+    const skullTop = svg.getElementById('SkullTop');
+    const neckU = svg.getElementById('NeckUpper') || svg.getElementById('NeckMid');
     const hipL  = svg.getElementById('HipLeft')   || svg.getElementById('LegLeft');
     const anklL = svg.getElementById('AnkleLeft') || svg.getElementById('FootLeft');
     const toeL  = svg.getElementById('ToesLeft')  || svg.getElementById('FootLeft');
@@ -677,6 +756,15 @@
       ],
       { duration: 300, iterations: 2, easing: 'ease-in-out', fill: 'none' }
     );
+    if (neckU) animateBone(neckU.id || 'NeckUpper','NeckUpper',[
+      { transform:'rotate(0deg)' }, { transform:'rotate(-2.5deg)' }, { transform:'rotate(0deg)' }
+    ], { duration: 600, easing:'ease-in-out', fill:'none' }, 'walk');
+    if (skull) animateBone(skull.id || 'HeadSkull','HeadSkull',[
+      { transform:'rotate(0deg)' }, { transform:'rotate(-2deg)' }, { transform:'rotate(0deg)' }
+    ], { duration: 600, easing:'ease-in-out', fill:'none' }, 'walk');
+    if (skullTop) animateBone('SkullTop','SkullTop',[
+      { transform:'rotate(0deg)' }, { transform:'rotate(-2.8deg)' }, { transform:'rotate(0deg)' }
+    ], { duration: 600, easing:'ease-in-out', fill:'none' }, 'walk');
     const step = (hip, ankl, toe, delay) => {
       if (hip)  hip.animate(
         [ { transform:'rotate(0deg)' }, { transform:'rotate(8deg)' }, { transform:'rotate(0deg)' } ],
@@ -725,19 +813,25 @@
     // Enforce neutral transforms for critical bones and eyelids
     try {
       const hu = svg?.getElementById('HeadSkull') || svg?.getElementById('HeadUpper') || svg?.getElementById('Head');
+      const st = svg?.getElementById('SkullTop');
       const bu = svg?.getElementById('BeakUpper');
       const bl = svg?.getElementById('BeakLower');
       const nu = svg?.getElementById('NeckUpper') || svg?.getElementById('NeckMid');
       const nb = svg?.getElementById('NeckBase');
       if (hu) hu.style.transform = 'rotate(0deg)';
+      if (st) st.style.transform = 'rotate(0deg)';
       if (bu) bu.style.transform = 'rotate(0deg)';
       if (bl) bl.style.transform = 'rotate(0deg)';
       if (nu) nu.style.transform = 'translate(0px, 0px) rotate(0deg)';
       if (nb) nb.style.transform = 'rotate(0deg)';
       const up = svg?.getElementById('EyelidUpper');
       const lo = svg?.getElementById('EyelidLower');
+      const upUnder = svg?.getElementById('EyelidUpperUnderlay');
+      const loUnder = svg?.getElementById('EyelidLowerUnderlay');
       if (up) { up.style.opacity = '0'; up.style.transform = ''; }
       if (lo) { lo.style.opacity = '0'; lo.style.transform = ''; }
+      if (upUnder) upUnder.style.opacity = '0';
+      if (loUnder) loUnder.style.opacity = '0';
     } catch {}
   }
 
@@ -777,7 +871,7 @@
     if (body) body.setAttribute('display','none');
 
     // Dilation across masks; extra on beaks to fully preserve the tip
-    ['maskLegL','maskLegR','maskFootL','maskFootR','maskTailA','maskTailB','maskTailC','maskTailD','maskWing','maskWingA','maskWingB','maskWingC','maskNeck','maskHead']
+    ['maskLegL','maskLegR','maskFootL','maskFootR','maskTailA','maskTailB','maskTailC','maskTailD','maskWing','maskWingA','maskWingB','maskWingC','maskNeck','maskHead','maskHeadBase','maskSkullTop']
       .forEach(id => dilateMask(id, 1.0));
     ['maskBeakUpper','maskBeakLower'].forEach(id => dilateMask(id, 1.6));
 
@@ -788,6 +882,7 @@
 
     // Set anatomical pivots + perf hints
     prepareRig();
+    await reset();
 
     // Ensure neutral beak/head state (closed beak, neutral skull)
     try {

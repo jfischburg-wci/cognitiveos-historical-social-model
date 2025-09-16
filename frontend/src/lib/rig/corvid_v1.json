@@ -8,8 +8,11 @@
     {"id":"NeckUpper",   "parent":"NeckMid",   "pivot":{"px":[312,192]}, "dof":{"pitch":[-16,12]}},
 
     {"id":"HeadSkull",   "parent":"NeckUpper", "pivot":{"px":[425,170]}, "dof":{"pitch":[-18,12]}, "alias":"Head"},
-    {"id":"BeakUpper",   "parent":"NeckUpper", "pivot":{"px":[425,170]}, "dof":{"pitch":[-18,12]}, "alias":"BeakUpper"},
-    {"id":"BeakLower",   "parent":"NeckUpper", "pivot":{"px":[432,192]}, "dof":{"pitch":[0,52]},   "alias":"BeakLower"},
+    {"id":"SkullTop",    "parent":"HeadSkull", "pivot":{"px":[425,168]}, "dof":{"pitch":[-12,10]}},
+    {"id":"BeakUpper",   "parent":"HeadSkull", "pivot":{"px":[425,170]}, "dof":{"pitch":[-18,12]}, "alias":"BeakUpper"},
+    {"id":"BeakLower",   "parent":"HeadSkull", "pivot":{"px":[432,192]}, "dof":{"pitch":[0,52]},   "alias":"BeakLower"},
+    {"id":"EyelidUpper", "parent":"HeadSkull", "pivot":{"px":[371,148]}, "dof":{"pitch":[0,0]}},
+    {"id":"EyelidLower", "parent":"HeadSkull", "pivot":{"px":[371,156]}, "dof":{"pitch":[0,0]}},
 
     {"id":"TailBase",    "parent":"Crow",      "pivot":{"rel":[0.19,0.62]}, "dof":{"pitch":[-12,12]}, "alias":"Tail"},
 

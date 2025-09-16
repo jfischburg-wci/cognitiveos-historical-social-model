@@ -5,9 +5,12 @@
     "NeckUpper": [-16, 12],
 
     "HeadSkull": [-18, 12],
+    "SkullTop": [-12, 10],
     "HeadSkullRoll": [-8, 8],
     "BeakUpper": [-18, 12],
     "BeakLower": [0, 52],
+    "EyelidUpper": [0, 0],
+    "EyelidLower": [0, 0],
 
     "Shoulder": [-30, 70],
     "Elbow": [0, 80],
@@ -34,6 +37,7 @@
     "caw": {
       "pitch": {
         "HeadSkull": [-14, 6],
+        "SkullTop": [-12, 6],
         "BeakUpper": [-14, 6],
         "BeakLower": [0, 40],
         "NeckUpper": [-10, 8],
@@ -46,6 +50,8 @@
         "Elbow": [-6, 6],
         "Wrist": [-4, 4],
         "Primaries": [-3, 3],
+        "NeckUpper": [-6, 4],
+        "SkullTop": [-6, 4],
         "TailBase": [-6, 6]
       }
     },
@@ -63,6 +69,8 @@
       "pitch": {
         "NeckMid": [-4, 4],
         "NeckUpper": [-4, 4],
+        "SkullTop": [-6, 4],
+        "HeadSkull": [-6, 4],
         "TailBase": [-4, 4]
       }
     },

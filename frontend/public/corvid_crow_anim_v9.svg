@@ -6,6 +6,10 @@
     <mask id="silMask"><use href="#crowSil"/></mask>
     <!-- Soften filter for seam underlays only -->
     <filter id="feather-soften"><feGaussianBlur stdDeviation="0.3"/></filter>
+    <filter id="soft-dilate" filterUnits="userSpaceOnUse" primitiveUnits="userSpaceOnUse">
+      <feMorphology operator="dilate" radius="1.2"/>
+      <feGaussianBlur stdDeviation="0.35"/>
+    </filter>
   </defs>
 
   <defs>
@@ -76,11 +80,23 @@
     </g></mask>
     <!-- New segmentation: head, neck, wing (with two sub-segments) -->
     <mask id="maskHead"><use href="#crowSil"/><g fill="black">
-      <!-- window around the head (allow extra margin for rotation) -->
+      <!-- retain entire head silhouette for global underlay -->
+      <rect x="0" y="0" width="275" height="738"/>
+      <rect x="520" y="0" width="189" height="738"/>
+      <rect x="275" y="330" width="245" height="408"/>
+    </g></mask>
+    <mask id="maskHeadBase"><use href="#crowSil"/><g fill="black">
+      <!-- lower half of head (cheek and throat) -->
+      <rect x="0" y="0" width="275" height="738"/>
+      <rect x="520" y="0" width="189" height="738"/>
+      <rect x="275" y="0" width="245" height="140"/>
+      <rect x="275" y="330" width="245" height="408"/>
+    </g></mask>
+    <mask id="maskSkullTop"><use href="#crowSil"/><g fill="black">
+      <!-- crown feathers / cranial dome -->
       <rect x="0" y="0" width="285" height="738"/>
-      <rect x="515" y="0" width="194" height="738"/>
-      <rect x="285" y="0" width="230" height="80"/>
-      <rect x="285" y="310" width="230" height="428"/>
+      <rect x="505" y="0" width="204" height="738"/>
+      <rect x="285" y="160" width="220" height="578"/>
     </g></mask>
     <mask id="maskNeck"><use href="#crowSil"/><g fill="black">
       <!-- window around neck below head -->
@@ -129,6 +145,9 @@
   <!-- Underlays: blurred duplicates to hide seams; remain outside animated groups -->
   <g id="bodyUnderlay" mask="url(#maskBody)" filter="url(#feather-soften)"><use href="#crowPNG"/></g>
   <g id="headUnderlay" mask="url(#maskHead)" filter="url(#feather-soften)"><use href="#crowPNG"/></g>
+  <g id="skullTopUnderlay" mask="url(#maskSkullTop)" filter="url(#soft-dilate)"><use href="#crowPNG"/></g>
+  <g id="beakUpperUnderlay" mask="url(#maskBeakUpper)" filter="url(#soft-dilate)"><use href="#crowPNG"/></g>
+  <g id="beakLowerUnderlay" mask="url(#maskBeakLower)" filter="url(#soft-dilate)"><use href="#crowPNG"/></g>
 
   <g id="Crow" class="rig" data-anim-role="crow">
     <g id="Body" class="part body" mask="url(#maskBody)"><use href="#crowPNG"/></g>
@@ -142,9 +161,16 @@
       <g id="Neck" class="part neck" mask="url(#maskNeck)" style="transform-origin: 312px 221px;"><use href="#crowPNG"/></g>
       <g id="NeckMid" class="part neck" mask="url(#maskNeckMid)" style="transform-origin: 312px 192px;"><use href="#crowPNG"/></g>
       <g id="NeckUpper" class="part neck upper" style="transform-origin: 312px 192px;">
-        <g id="HeadSkull" class="part headSkull" mask="url(#maskHead)" style="transform-origin: 425px 170px;">
-          <g id="Head" class="part head">
+        <g id="HeadSkull" class="part headSkull" style="transform-origin: 425px 170px;">
+          <g id="SkullTop" class="part skullTop" mask="url(#maskSkullTop)"><use href="#crowPNG"/></g>
+          <g id="Head" class="part head" mask="url(#maskHeadBase)">
             <use href="#crowPNG"/>
+            <g id="EyelidUpperUnderlay" mask="url(#maskHeadBase)" filter="url(#soft-dilate)">
+              <path d="M 324 150 Q 371 118 418 150 L 418 140 Q 371 108 324 140 Z" fill="#000"/>
+            </g>
+            <g id="EyelidLowerUnderlay" mask="url(#maskHeadBase)" filter="url(#soft-dilate)">
+              <path d="M 324 150 Q 371 182 418 150 L 418 160 Q 371 192 324 160 Z" fill="#000"/>
+            </g>
             <g id="Eyelids" class="part eyelids" mask="url(#silMask)">
               <path id="EyelidUpper" d="M 324 150 Q 371 118 418 150 L 418 140 Q 371 108 324 140 Z" fill="#000" opacity="0"/>
               <path id="EyelidLower" d="M 324 150 Q 371 182 418 150 L 418 160 Q 371 192 324 160 Z" fill="#000" opacity="0"/>
