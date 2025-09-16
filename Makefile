@@ -8,6 +8,7 @@ PROD_URL := https://corvid.contentguru.ai
 PAGES_WORKFLOW := pages.yml
 
 .PHONY: help all setup dev dev-overlay build preview preview-overlay test-e2e qa-actions qa-live-200 qa-live-100 qa-live-caw-200 qa-live-caw-100 qa-live-hop-200 qa-live-hop-100 qa-live-walk-200 qa-live-walk-100 typecheck lint format clean ci deploy deploy-force prod-url \
+        qa-regenerate qa-commit qa-ci \
         be-setup be-run be-test be-health \
         be-docker-build-dev be-docker-run-dev be-docker-build-prod be-docker-run-prod compose-up compose-down
 
@@ -30,6 +31,9 @@ help:
 	@echo "  qa-live-hop-100 - Capture live hop at 100% zoom"
 	@echo "  qa-live-walk-200 - Capture live walk at 200% zoom"
 	@echo "  qa-live-walk-100 - Capture live walk at 100% zoom"
+	@echo "  qa-regenerate   - Rebuild and regenerate QA screenshots locally"
+	@echo "  qa-commit       - Commit regenerated QA screenshots to main"
+	@echo "  qa-ci           - Trigger the QA workflow (artifacts + PR comment)"
 	@echo "  typecheck     - Run svelte-check across Svelte code"
 	@echo "  lint          - Prettier check common source files"
 	@echo "  format        - Prettier write common source files"
@@ -95,6 +99,18 @@ qa-live-walk-200:
 
 qa-live-walk-100:
 	cd $(FRONTEND) && bunx playwright test -c tests/playwright.live1x.config.ts tests/specs/live-walk-1x.spec.ts
+
+# Regenerate all QA screenshots locally (saves to docs/qa/...)
+qa-regenerate:
+	cd $(FRONTEND) && bunx playwright install chromium && bun run test:e2e
+
+# Commit regenerated QA screenshots (optional convenience target)
+qa-commit:
+	git add docs/qa/actions-seams-reset-artifacts docs/qa/live && git commit -m "docs(qa): refresh screenshots" && git push origin main
+
+# Trigger the GitHub QA workflow which regenerates screenshots and uploads artifacts
+qa-ci:
+	gh workflow run qa.yml --ref main || echo "Use: gh workflow run qa.yml --ref <branch>"
 
 typecheck:
 	cd $(FRONTEND) && bunx svelte-check
